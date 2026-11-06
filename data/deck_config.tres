@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CardDeckConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/card_deck_config.gd" id="1_cfg"]
+[ext_resource type="Texture2D" path="res://Assets/cardTextures/blank.png" id="2_blank"]
+
+[resource]
+script = ExtResource("1_cfg")
+cards_per_set = 3
+placeholder_set_count = 10
+default_front_texture = ExtResource("2_blank")

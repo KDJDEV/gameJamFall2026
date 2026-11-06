@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://cwiocjc62w54v"]
+
+[ext_resource type="Script" uid="uid://2iuh870vef2k" path="res://scripts/card.gd" id="1_kikvd"]
+
+[ext_resource type="Texture2D" path="res://Assets/cardTextures/blank.png" id="2_blank"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_rjlel"]
+size = Vector3(1.4, 0.04, 2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_back"]
+albedo_color = Color(0.22, 0.05, 0.06, 1)
+
+[sub_resource type="QuadMesh" id="QuadMesh_front"]
+size = Vector2(1.4, 2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_front"]
+albedo_texture = ExtResource("2_blank")
+
+[node name="Card" type="Node3D" unique_id=118556354]
+transform = Transform3D(0.055, 0, 0, 0, 0.055, 0, 0, 0, 0.055, 0, 0, 0)
+script = ExtResource("1_kikvd")
+
+[node name="CardMesh" type="MeshInstance3D" parent="." unique_id=1001585514]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_back")
+mesh = SubResource("BoxMesh_rjlel")
+
+[node name="Front" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0205)
+mesh = SubResource("QuadMesh_front")
+surface_material_override/0 = SubResource("StandardMaterial3D_front")
+
+[node name="Label" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0215)
+pixel_size = 0.006
+double_sided = false
+modulate = Color(0, 0, 0, 1)
+outline_size = 0
+text = ""
+font_size = 64
+autowrap_mode = 3
+width = 220.0

@@ -1,0 +1,133 @@
+class_name CardHand
+extends Node3D
+
+signal hand_changed(cards: Array[Node3D], selected_index: int)
+signal card_drawn(card: Node3D)
+signal card_discarded(card: Node3D)
+
+@export var card_scene: PackedScene
+@export_range(1, 10) var hand_limit: int = 5
+@export_range(0.1, 2.0) var card_spacing: float = 0.3
+@export_range(0.0, 1.5) var fan_width: float = 0.9
+@export_range(0.0, 0.5) var fan_height: float = 0.06
+@export_range(0.0, 0.6) var fan_rotation: float = 0.12
+@export var starting_hand_size: int = 5
+@export_range(0.0, 0.1) var bob_height: float = 0.012
+@export_range(0.0, 0.1) var bob_sway: float = 0.008
+@export_range(0.1, 3.0) var bob_speed: float = 0.7
+@export_range(1.0, 20.0) var bob_smoothing: float = 6.0
+
+@export var show_selection: bool = true
+
+var cards: Array[Node3D] = []
+var discard_pile: Array[Node3D] = []
+var selected_index: int = 0
+var draw_count: int = 0
+var _bob_time: float = 0.0
+var _rest_position := Vector3.ZERO
+var _rest_rotation := Vector3.ZERO
+
+func _ready() -> void:
+	_rest_position = position
+	_rest_rotation = rotation
+	if card_scene == null:
+		card_scene = preload("res://card.tscn")
+	for index in range(min(starting_hand_size, hand_limit)):
+		draw_card()
+	_update_selection()
+	_layout_hand()
+
+func _process(delta: float) -> void:
+	_bob_time += delta * bob_speed
+	var bob_offset := Vector3(
+		sin(_bob_time * 1.1) * bob_sway,
+		sin(_bob_time * 0.8 + 0.7) * bob_height,
+		cos(_bob_time * 0.9) * bob_sway * 0.35
+	)
+	var target_position := _rest_position + bob_offset
+	var target_rotation := _rest_rotation + Vector3(
+		sin(_bob_time * 0.7) * bob_sway * 0.5,
+		sin(_bob_time * 0.6 + 0.4) * bob_sway * 0.5,
+		sin(_bob_time * 0.5) * bob_sway * 0.25
+	)
+	var weight := 1.0 - exp(-bob_smoothing * delta)
+	position = position.lerp(target_position, weight)
+	rotation = rotation.lerp(target_rotation, weight)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event is InputEventKey:
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	match key_event.keycode:
+		KEY_LEFT:
+			_move_selection(-1)
+		KEY_RIGHT:
+			_move_selection(1)
+		KEY_SPACE:
+			discard_selected()
+		KEY_CTRL:
+			if key_event.location == KEY_LOCATION_RIGHT:
+				draw_card()
+
+func _move_selection(direction: int) -> void:
+	if cards.is_empty():
+		return
+	selected_index = wrapi(selected_index + direction, 0, cards.size())
+	_update_selection()
+
+func draw_card() -> Node3D:
+	if cards.size() >= hand_limit or card_scene == null:
+		return null
+	var card := card_scene.instantiate() as Node3D
+	if card == null:
+		return null
+	add_child(card)
+	cards.append(card)
+	draw_count += 1
+	if card.has_method("configure"):
+		card.configure("card_%02d" % draw_count, "unknown", "unknown")
+	card_drawn.emit(card)
+	selected_index = cards.size() - 1
+	_layout_hand()
+	_update_selection()
+	return card
+
+func discard_selected() -> Node3D:
+	if cards.is_empty() or selected_index < 0 or selected_index >= cards.size():
+		return null
+	var card := cards[selected_index]
+	cards.remove_at(selected_index)
+	discard_pile.append(card)
+	card.visible = false
+	card_discarded.emit(card)
+	selected_index = clampi(selected_index, 0, cards.size() - 1)
+	_layout_hand()
+	_update_selection()
+	return card
+
+func _update_selection() -> void:
+	for index in cards.size():
+		var card := cards[index]
+		card.set_meta("hand_index", index)
+		if card.has_method("set_selected"):
+			card.set_selected(show_selection and index == selected_index)
+	hand_changed.emit(cards, selected_index)
+
+func _layout_hand() -> void:
+	var count := cards.size()
+	if count == 0:
+		return
+	var center := (count - 1) * 0.5
+	for index in count:
+		var card := cards[index]
+		var offset := float(index) - center
+		var card_position := Vector3(offset * card_spacing, -abs(offset) * fan_height, abs(offset) * 0.025)
+		var card_rotation := Vector3(0.0, 0.0, -offset * fan_rotation)
+		if card.has_method("set_hand_pose"):
+			card.set_hand_pose(card_position, card_rotation)
+		else:
+			card.position = card_position
+			card.rotation = card_rotation
+		card.visible = true

@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://pu5xp46m242d"]
+
+[ext_resource type="PackedScene" uid="uid://dvmweo6x0ki1c" path="res://Assets/models/knight.glb" id="1_d88wx"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w2165"]
+albedo_color = Color(0, 0, 0, 1)
+
+[node name="knight" unique_id=1619338965 instance=ExtResource("1_d88wx")]
+
+[node name="Hand Armor" parent="." index="0" unique_id=241034511]
+surface_material_override/0 = SubResource("StandardMaterial3D_w2165")
+
+[node name="Body" parent="." index="1" unique_id=1563947956]
+surface_material_override/0 = SubResource("StandardMaterial3D_w2165")
+
+[node name="Belt" parent="." index="2" unique_id=1314249608]
+surface_material_override/0 = SubResource("StandardMaterial3D_w2165")
+
+[node name="Leg Atmor" parent="." index="3" unique_id=256644277]
+surface_material_override/0 = SubResource("StandardMaterial3D_w2165")
+
+[node name="Shoulder Armor" parent="." index="4" unique_id=1673957157]
+surface_material_override/0 = SubResource("StandardMaterial3D_w2165")

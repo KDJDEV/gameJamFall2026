@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://2qbg270mi7lo"]
 
 [ext_resource type="PackedScene" uid="uid://bgk41nwt3g7mc" path="res://Assets/models/wine bottle.fbx" id="1_gd4vy"]
-[ext_resource type="PackedScene" uid="uid://dgqg7j72drjrw" path="res://Assets/models/vloer.fbx" id="1_pyidc"]
+[ext_resource type="PackedScene" uid="uid://dgqg7j72drjrw" path="res://Assets/models/floor.fbx" id="1_pyidc"]
 [ext_resource type="PackedScene" uid="uid://bbuna6cgmgv1c" path="res://Assets/models/wall.fbx" id="2_vvh5c"]
 [ext_resource type="PackedScene" uid="uid://b67j7b1oi0kkf" path="res://Assets/models/wall with doorhol.fbx" id="3_vvh5c"]
 [ext_resource type="PackedScene" uid="uid://dgrr3cvk6fyr" path="res://Assets/models/bar_2.fbx" id="4_28aoi"]
@@ -13,7 +13,22 @@
 [ext_resource type="PackedScene" uid="uid://bymxj5ngyw6yc" path="res://Assets/models/box.fbx" id="10_tw3kd"]
 [ext_resource type="PackedScene" uid="uid://dv2kif8da301l" path="res://Assets/models/wood pole.fbx" id="12_qw60f"]
 [ext_resource type="PackedScene" uid="uid://dv65tm4h2roqj" path="res://Assets/models/body.tscn" id="13_eji0w"]
-[ext_resource type="Texture2D" uid="uid://dyjb0qc77hlgs" path="res://Assets/cardTextures/blank.png" id="14_qwhpj"]
+[ext_resource type="Script" uid="uid://ds7d8t70c3mai" path="res://scripts/player_view.gd" id="14_3dlgs"]
+[ext_resource type="Script" uid="uid://clvousp8clg1n" path="res://scripts/routed_card_hand.gd" id="14_sq7yr"]
+[ext_resource type="PackedScene" uid="uid://pu5xp46m242d" path="res://Assets/models/knight.tscn" id="15_po8fv"]
+[ext_resource type="PackedScene" uid="uid://cwiocjc62w54v" path="res://card.tscn" id="15_sq7yr"]
+[ext_resource type="PackedScene" uid="uid://cxj4ah5krwotq" path="res://Assets/models/mug.fbx" id="15_ub8w1"]
+[ext_resource type="Script" uid="uid://burobgjgwpdqx" path="res://scripts/card_pile.gd" id="16_sq7yr"]
+[ext_resource type="Script" uid="uid://cvohkw35qelwi" path="res://scripts/card_deck.gd" id="17_50g4q"]
+[ext_resource type="Resource" path="res://data/deck_config.tres" id="18_3dlgs"]
+[ext_resource type="Script" uid="uid://r4xf41jg7d67" path="res://scripts/table_set_area.gd" id="19_vte5o"]
+[ext_resource type="AudioStream" uid="uid://cm887m6dnvqxm" path="res://Assets/audio/door.mp3" id="20_door"]
+[ext_resource type="AudioStream" uid="uid://bv8w17lshgqbi" path="res://Assets/audio/ambience.wav" id="21_ambience"]
+[ext_resource type="AudioStream" uid="uid://ca2ad1jjfqqbx" path="res://Assets/audio/backgroundAmbience.wav" id="25_ab83r"]
+[ext_resource type="Script" uid="uid://1s12axch6ju" path="res://volumeFadeIn.gd" id="26_1xb4a"]
+[ext_resource type="Script" uid="uid://badqcvvqn3ike" path="res://scripts/dialogue/dialogue_manager.gd" id="27_uwexw"]
+[ext_resource type="Script" uid="uid://ik8lqjtlcfqt" path="res://scripts/dialogue/dialogue_speaker.gd" id="28_8pgb7"]
+[ext_resource type="Script" uid="uid://dma8ex3iomfjd" path="res://scripts/dealer.gd" id="29_8pgb7"]
 
 [sub_resource type="Environment" id="Environment_26a3e"]
 background_energy_multiplier = 0.1
@@ -29,21 +44,6 @@ frequency = 0.1
 [sub_resource type="NoiseTexture3D" id="NoiseTexture3D_qt76e"]
 noise = SubResource("FastNoiseLite_sq7yr")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a8xpl"]
-cull_mode = 2
-albedo_texture = ExtResource("14_qwhpj")
-
-[sub_resource type="QuadMesh" id="QuadMesh_26a3e"]
-material = SubResource("StandardMaterial3D_a8xpl")
-size = Vector2(0.67, 1)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6l4u4"]
-albedo_color = Color(0.82572114, 0.62231237, 0.36273342, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_26a3e"]
-material = SubResource("StandardMaterial3D_6l4u4")
-size = Vector3(0.67, 1, 0.01)
-
 [node name="Root" type="Node3D" unique_id=1180066170]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1734695327]
@@ -54,7 +54,7 @@ environment = SubResource("Environment_26a3e")
 [node name="Objects" type="Node3D" parent="." unique_id=1758704438]
 
 [node name="wine bottle" parent="Objects" unique_id=1966229483 instance=ExtResource("1_gd4vy")]
-transform = Transform3D(-2.649862e-08, -0.60621774, 0.35, 0.7, -3.059797e-08, 0, 1.5298985e-08, 0.35, 0.60621774, 4.950296, 0.16993964, 3.6885767)
+transform = Transform3D(-2.649862e-08, -0.60621774, 0.35, 0.7, -3.059797e-08, 0, 1.5298985e-08, 0.35, 0.60621774, 4.950296, 0.16993964, 2.45962)
 
 [node name="vloer" parent="Objects" unique_id=864124519 instance=ExtResource("1_pyidc")]
 
@@ -95,10 +95,7 @@ transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 1.42
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.122322, -0.19115674, 5.1055417)
 
 [node name="flame" parent="Objects/candle" unique_id=1721807044 instance=ExtResource("7_vyht1")]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0.6171448, 1.1184676, -0.2741189)
-
-[node name="door" parent="Objects" unique_id=1762432124 instance=ExtResource("8_bf3um")]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 6.60527, 0, 4.6864905)
+transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0.6151993, 1.1446145, -0.27214575)
 
 [node name="box" parent="Objects" unique_id=378998002 instance=ExtResource("10_tw3kd")]
 transform = Transform3D(0.9999779, 0.0066500683, 0, -0.0066500683, 0.9999779, 0, 0, 0, 1, 0.6944215, -0.30440235, -3.8524709)
@@ -117,13 +114,13 @@ transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 2.748417, -0.61173415, 
 
 [node name="FloorLight" type="OmniLight3D" parent="Objects" unique_id=894029970]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 0.27138156, 3.4199162)
-light_energy = 0.035
+light_energy = 0.04
 shadow_enabled = true
 shadow_bias = 0.0
 shadow_opacity = 0.98
 shadow_blur = 10.0
 
-[node name="vloer2" parent="Objects" unique_id=1004234813 instance=ExtResource("1_pyidc")]
+[node name="floor" parent="Objects" unique_id=1004234813 instance=ExtResource("1_pyidc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8854113, 0)
 
 [node name="body2" parent="Objects" unique_id=252112887 instance=ExtResource("13_eji0w")]
@@ -140,19 +137,64 @@ shadow_enabled = true
 shadow_bias = 0.0
 shadow_opacity = 0.98
 shadow_blur = 10.0
-omni_range = 0.4
+omni_range = 0.6
 script = ExtResource("6_qwhpj")
 noise = SubResource("NoiseTexture3D_qt76e")
 
-[node name="Player" type="Node3D" parent="." unique_id=89060603]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6992095, 1.0429318, 5.522321)
+[node name="Door" type="Node3D" parent="Objects" unique_id=1636478126]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0071597, 0, 1.4531472)
+
+[node name="door" parent="Objects/Door" unique_id=1762432124 instance=ExtResource("8_bf3um")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 4.5468163, 0, 2.9204051)
+
+[node name="DoorAudio" type="AudioStreamPlayer3D" parent="Objects/Door" unique_id=1181411162]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+stream = ExtResource("20_door")
+
+[node name="DoorLookTarget" type="Marker3D" parent="Objects" unique_id=320170324]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6871598, 1.5, 1.6131473)
+
+[node name="knight" parent="Objects" unique_id=1619338965 instance=ExtResource("15_po8fv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7557492, 0.104587734, -1.8708367)
+
+[node name="mug" parent="Objects/knight" unique_id=273275330 instance=ExtResource("15_ub8w1")]
+transform = Transform3D(1, 0, 0, 0, 0.27933675, -0.9601932, 0, 0.9601932, 0.27933675, 0.39323425, -0.31230104, -1.3238554)
+
+[node name="floor2" parent="Objects" unique_id=895438748 instance=ExtResource("1_pyidc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8854113, -4.7918663)
+
+[node name="wall3" parent="Objects" unique_id=571021478 instance=ExtResource("2_vvh5c")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 11.520955, 0, 1.1372056)
+
+[node name="Player" type="Node3D" parent="." unique_id=89060603 node_paths=PackedStringArray("camera", "hand", "door_look_target", "door", "outside_light", "ambience_audio", "door_audio")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6992095, 1.0429318, 5.4799414)
+script = ExtResource("14_3dlgs")
+camera = NodePath("Camera3D")
+hand = NodePath("Camera3D/CardHand")
+door_look_target = NodePath("../Objects/DoorLookTarget")
+door = NodePath("../Objects/Door")
+outside_light = NodePath("../OutsideLight")
+ambience_audio = NodePath("../AmbienceAudio")
+door_audio = NodePath("../Objects/Door/DoorAudio")
 
 [node name="Camera3D" type="Camera3D" parent="Player" unique_id=715553545]
 transform = Transform3D(1, 0, 0, 0, 0.8965723, 0.44289738, 0, -0.44289738, 0.8965723, 0, 0.27867758, 0.22539282)
 
+[node name="CardHand" type="Node3D" parent="Player/Camera3D" unique_id=1722327105 node_paths=PackedStringArray("draw_pile", "discard_target", "set_area")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.12352502, -0.6183529)
+script = ExtResource("14_sq7yr")
+draw_pile = NodePath("../../../RightNpcDiscardPile")
+discard_target = NodePath("../../../PlayerDiscardPile")
+set_area = NodePath("../../../PlayerSetArea")
+draw_duration = 0.25
+dealt_by_dealer = true
+hand_limit = 8
+card_spacing = 0.068
+fan_height = 0.028
+fan_rotation = 0.09
+
 [node name="TestLight" type="OmniLight3D" parent="." unique_id=1881773175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 0.27138156, 3.4199162)
-visible = false
 light_energy = 5.0
 shadow_enabled = true
 shadow_bias = 0.0
@@ -160,12 +202,152 @@ shadow_opacity = 0.98
 shadow_blur = 10.0
 omni_range = 50.0
 
-[node name="Card" type="Node3D" parent="." unique_id=91832041]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.671259, 1.0401561, 5.17739)
+[node name="PlayerDiscardPile" type="Node3D" parent="." unique_id=296235504]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 2.3604069, 0.838151, 5.3102846)
+script = ExtResource("16_sq7yr")
+card_scene = ExtResource("15_sq7yr")
+visible_cards = 0
+receive_duration = 0.25
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Card" unique_id=1340368428]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.012005806)
-mesh = SubResource("QuadMesh_26a3e")
+[node name="RightNpcDiscardPile" type="Node3D" parent="." unique_id=1393164993]
+transform = Transform3D(0.25881907, 0.9659258, -4.222196e-08, 0, -4.371139e-08, -1, -0.9659258, 0.25881907, -1.1313341e-08, 3.1604972, 0.8387723, 5.2571697)
+script = ExtResource("16_sq7yr")
+card_scene = ExtResource("15_sq7yr")
+visible_cards = 0
 
-[node name="Body" type="MeshInstance3D" parent="Card" unique_id=1065006429]
-mesh = SubResource("BoxMesh_26a3e")
+[node name="RightNpcHand" type="Node3D" parent="." unique_id=387868335 node_paths=PackedStringArray("draw_pile", "discard_target", "set_area")]
+transform = Transform3D(0.25881907, 0, 0.9659258, 0, 1, 0, -0.9659258, 0, 0.25881907, 3.1086454, 0.9750196, 4.864435)
+script = ExtResource("14_sq7yr")
+draw_pile = NodePath("../DealerDiscardPile")
+discard_target = NodePath("../RightNpcDiscardPile")
+set_area = NodePath("../RightNpcSetArea")
+controllable = false
+audio_volume_db = -14.0
+auto_play = true
+dealt_by_dealer = true
+hand_limit = 8
+card_spacing = 0.068
+fan_height = 0.028
+fan_rotation = 0.09
+show_selection = false
+
+[node name="DealerDrawPile" type="Node3D" parent="." unique_id=736207871]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 2.657257, 0.8472582, 4.7126536)
+script = ExtResource("16_sq7yr")
+card_scene = ExtResource("15_sq7yr")
+visible_cards = 8
+fill_from_deck = true
+
+[node name="DealerDiscardPile" type="Node3D" parent="." unique_id=647796079]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 3.150739, 0.84354603, 4.507302)
+script = ExtResource("16_sq7yr")
+card_scene = ExtResource("15_sq7yr")
+visible_cards = 0
+
+[node name="LeftNpcDiscardPile" type="Node3D" parent="." unique_id=803417583]
+transform = Transform3D(0.25881907, -0.9659258, 4.222196e-08, 0, -4.371139e-08, -1, 0.9659258, 0.25881907, -1.1313341e-08, 2.3278127, 0.83861446, 4.4832163)
+script = ExtResource("16_sq7yr")
+card_scene = ExtResource("15_sq7yr")
+visible_cards = 0
+
+[node name="LeftNpcHand" type="Node3D" parent="." unique_id=2068188315 node_paths=PackedStringArray("draw_pile", "discard_target", "set_area")]
+transform = Transform3D(0.25881907, 0, -0.9659258, 0, 1, 0, 0.9659258, 0, 0.25881907, 2.3311088, 0.96391106, 4.935742)
+script = ExtResource("14_sq7yr")
+draw_pile = NodePath("../PlayerDiscardPile")
+discard_target = NodePath("../LeftNpcDiscardPile")
+set_area = NodePath("../LeftNpcSetArea")
+controllable = false
+audio_volume_db = -14.0
+auto_play = true
+dealt_by_dealer = true
+hand_limit = 8
+card_spacing = 0.068
+fan_height = 0.028
+fan_rotation = 0.09
+show_selection = false
+
+[node name="DealerHand" type="Node3D" parent="." unique_id=50657116 node_paths=PackedStringArray("draw_pile", "discard_target", "set_area")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.7125216, 1.0393761, 4.4936047)
+script = ExtResource("14_sq7yr")
+draw_pile = NodePath("../DealerDrawPile")
+discard_target = NodePath("../DealerDiscardPile")
+set_area = NodePath("../DealerSetArea")
+controllable = false
+audio_volume_db = -14.0
+auto_play = true
+dealt_by_dealer = true
+hand_limit = 8
+card_spacing = 0.068
+fan_height = 0.028
+fan_rotation = 0.09
+show_selection = false
+
+[node name="CardDeck" type="Node" parent="." unique_id=750956478]
+script = ExtResource("17_50g4q")
+config = ExtResource("18_3dlgs")
+
+[node name="DealerSetArea" type="Node3D" parent="." unique_id=975052297]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.74, 0.8345, 4.52)
+script = ExtResource("19_vte5o")
+
+[node name="PlayerSetArea" type="Node3D" parent="." unique_id=375904462]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.74, 0.8345, 5.13)
+script = ExtResource("19_vte5o")
+
+[node name="RightNpcSetArea" type="Node3D" parent="." unique_id=718683541]
+transform = Transform3D(0.25881907, 0, 0.9659258, 0, 1, 0, -0.9659258, 0, 0.25881907, 3.04, 0.8345, 4.9)
+script = ExtResource("19_vte5o")
+
+[node name="LeftNpcSetArea" type="Node3D" parent="." unique_id=1881048246]
+transform = Transform3D(0.25881907, 0, -0.9659258, 0, 1, 0, 0.9659258, 0, 0.25881907, 2.44, 0.8345, 4.9)
+script = ExtResource("19_vte5o")
+
+[node name="AmbienceAudio" type="AudioStreamPlayer" parent="." unique_id=333435411]
+stream = ExtResource("21_ambience")
+
+[node name="OutsideLight" type="OmniLight3D" parent="." unique_id=1814074497]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7646008, 1.3199382, 0.08496237)
+light_color = Color(0.98386544, 0.00028040976, 0.285425, 1)
+light_energy = 0.0
+light_size = 1.0
+shadow_enabled = true
+omni_range = 27.485
+omni_attenuation = -1.436
+
+[node name="vloer" parent="." unique_id=654844174 instance=ExtResource("1_pyidc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.9234524)
+
+[node name="BackgroundAmbience" type="AudioStreamPlayer" parent="." unique_id=2142870789]
+stream = ExtResource("25_ab83r")
+volume_db = -60.0
+autoplay = true
+script = ExtResource("26_1xb4a")
+
+[node name="DialogueManager" type="Node" parent="." unique_id=154195880 node_paths=PackedStringArray("draw_pile")]
+script = ExtResource("27_uwexw")
+draw_pile = NodePath("../DealerDrawPile")
+
+[node name="DealerSpeaker" type="Marker3D" parent="." unique_id=1094380306]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.75, 1.45, 4.18)
+script = ExtResource("28_8pgb7")
+speaker_id = &"dealer"
+display_name = "Dealer"
+
+[node name="LeftNpcSpeaker" type="Marker3D" parent="." unique_id=1974471369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.97, 1.45, 5.05)
+script = ExtResource("28_8pgb7")
+speaker_id = &"left_npc"
+display_name = "Left NPC"
+
+[node name="RightNpcSpeaker" type="Marker3D" parent="." unique_id=595901446]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.48, 1.45, 4.96)
+script = ExtResource("28_8pgb7")
+speaker_id = &"right_npc"
+display_name = "Right NPC"
+
+[node name="Dealer" type="Node" parent="." unique_id=1610744365 node_paths=PackedStringArray("dialogue_manager", "draw_pile", "reshuffle_source", "hands")]
+script = ExtResource("29_8pgb7")
+dialogue_manager = NodePath("../DialogueManager")
+draw_pile = NodePath("../DealerDrawPile")
+reshuffle_source = NodePath("../LeftNpcDiscardPile")
+hands = [NodePath("../RightNpcHand"), NodePath("../Player/Camera3D/CardHand"), NodePath("../LeftNpcHand"), NodePath("../DealerHand")]

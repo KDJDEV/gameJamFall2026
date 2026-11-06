@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://crfr2hil3o4du"
-path="res://.godot/imported/wine barrel 2.fbx-1ea7208557f6b83cbefe79a82102cd2c.scn"
+uid="uid://dgqg7j72drjrw"
+path="res://.godot/imported/floor.fbx-2a4c051e8f5f0ad98f0e410a44f1bd33.scn"
 
 [deps]
 
-source_file="res://Assets/models/wine barrel 2.fbx"
-dest_files=["res://.godot/imported/wine barrel 2.fbx-1ea7208557f6b83cbefe79a82102cd2c.scn"]
+source_file="res://Assets/models/floor.fbx"
+dest_files=["res://.godot/imported/floor.fbx-2a4c051e8f5f0ad98f0e410a44f1bd33.scn"]
 
 [params]
 
@@ -43,9 +43,9 @@ _subresources={
 "animations": {
 &"Take 001": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/models/extracted/wine barrel 2.anim",
+"save_to_file/fallback_path": "res://Assets/models/extracted/vloer.anim",
 "save_to_file/keep_custom_tracks": true,
-"save_to_file/path": "uid://7o455e5bu18w",
+"save_to_file/path": "uid://cwsw4rsf881q8",
 "settings/loop_mode": 0,
 "slice_1/end_frame": 0,
 "slice_1/loop_mode": 0,
@@ -2101,26 +2101,26 @@ _subresources={
 "materials": {
 "lambert3": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://Assets/models/extracted/wine barrel 2.lambert3.material",
-"use_external/path": "uid://hvphg1lb3vyy"
+"use_external/fallback_path": "res://Assets/models/extracted/vloer.lambert3.material",
+"use_external/path": "uid://cdwagyew25usy"
 }
 },
 "meshes": {
-"Root Scene_pCube274": {
+"Root Scene_polySurface197": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/models/extracted/wine barrel 2.pCube274.mesh",
+"save_to_file/fallback_path": "res://Assets/models/extracted/vloer.polySurface197.mesh",
 "save_to_file/make_streamable": "",
-"save_to_file/path": "uid://2a42hlsl1v6n"
+"save_to_file/path": "uid://is4elbq3r4mk"
 },
-"pCube274": {
+"polySurface197": {
 "generate/lightmap_uv": 0,
 "generate/lods": 0,
 "generate/shadow_meshes": 0,
 "lods/normal_merge_angle": 20.0,
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/models/extracted/wine barrel 2.pCube274.mesh",
+"save_to_file/fallback_path": "res://Assets/models/extracted/vloer.polySurface197.mesh",
 "save_to_file/make_streamable": "",
-"save_to_file/path": "uid://2a42hlsl1v6n"
+"save_to_file/path": "uid://is4elbq3r4mk"
 }
 },
 "nodes": {

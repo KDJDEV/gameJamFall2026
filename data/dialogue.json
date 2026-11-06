@@ -1,0 +1,61 @@
+{
+	"_help": [
+		"HOW TO ADD DIALOGUE: append an entry to 'sequences'. Each sequence has an id, a trigger and a list of lines.",
+		"Triggers: {\"type\": \"start\", \"delay\": 2.0} | {\"type\": \"cards_left\", \"value\": 20} | {\"type\": \"cards_drawn\", \"value\": 5} | {\"type\": \"manual\"}",
+		"cards_left / cards_drawn count the draw pile (deck); cards_drawn counts from when the dealer finishes dealing. A sequence plays once and sequences that trigger together are queued.",
+		"A 'manual' sequence never starts by itself; include it from another sequence with a line like { \"play_sequence\": \"shuffle\" }.",
+		"Line fields: speaker (a DialogueSpeaker speaker_id, or 'player' for internal thoughts), text, and optionally",
+		"audio (res:// path to a clip; it plays from the speaker and sets the line length), delay (seconds before the line),",
+		"duration (override the line length), pause (seconds after the line). Without audio the length is estimated from the text.",
+		"event (runs a table action when the line starts: 'shuffle_deck' or 'deal_hands'); add \"wait\": true to hold the line until it finishes."
+	],
+	"sequences": [
+		{
+			"id": "intro",
+			"trigger": { "type": "start", "delay": 2.0 },
+			"lines": [
+				{ "speaker": "dealer", "text": "Well, I guess I start since I'm the dealer." },
+				{ "speaker": "left_npc", "text": "Why did they choose you to be the dealer anyway?" },
+				{ "speaker": "dealer", "text": "Probably because I'm the worst criminal here." },
+				{ "speaker": "right_npc", "text": "Ha. Don't flatter yourself." },
+				{ "play_sequence": "shuffle" },
+				{ "speaker": "dealer", "text": "Five cards in hand, no more. Make a set and it goes face up on the table. No arguing.", "event": "deal_hands" },
+				{ "speaker": "left_npc", "text": "And when the deck runs out?" },
+				{ "speaker": "dealer", "text": "I reshuffle. Once. Same as they told us." },
+				{ "speaker": "right_npc", "text": "They told us the rules a dozen times." },
+				{ "speaker": "player", "text": "I can't afford to lose. I'm not dying tonight." },
+				{ "speaker": "player", "text": "I should probably be careful that they're not watching when I peek at their cards." }
+			]
+		},
+		{
+			"id": "shuffle",
+			"trigger": { "type": "manual" },
+			"lines": [
+				{ "speaker": "dealer", "text": "Hold on, let me shuffle.", "event": "shuffle_deck", "wait": true }
+			]
+		},
+		{
+			"id": "round_two",
+			"trigger": { "type": "cards_left", "value": 0 },
+			"lines": [
+				{ "speaker": "dealer", "text": "That's the last of the deck." },
+				{ "speaker": "left_npc", "text": "Already? That went fast." },
+				{ "play_sequence": "shuffle" },
+				{ "speaker": "dealer", "text": "Remember, I only reshuffle once. After this, it's over." },
+				{ "speaker": "player", "text": "Last chance. Whoever has the most sets walks out of here." }
+			]
+		},
+		{
+			"id": "five_drawn",
+			"trigger": { "type": "cards_drawn", "value": 5 },
+			"lines": [
+				{ "speaker": "left_npc", "text": "You ever wonder who's paying for all this? The candles, the wine, a whole room just for us." },
+				{ "speaker": "right_npc", "text": "The state. The same people who put us here." },
+				{ "speaker": "dealer", "text": "Rehabilitation through competition. That's what the paperwork called it." },
+				{ "speaker": "left_npc", "text": "I signed mine without reading it. Didn't think anyone read those." },
+				{ "speaker": "right_npc", "text": "Eyes on your own cards, all of you." },
+				{ "speaker": "player", "text": "Nobody here is going to play fair. I shouldn't either." }
+			]
+		}
+	]
+}
