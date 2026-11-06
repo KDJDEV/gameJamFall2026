@@ -1,0 +1,171 @@
+[gd_scene format=3 uid="uid://2qbg270mi7lo"]
+
+[ext_resource type="PackedScene" uid="uid://bgk41nwt3g7mc" path="res://Assets/models/wine bottle.fbx" id="1_gd4vy"]
+[ext_resource type="PackedScene" uid="uid://dgqg7j72drjrw" path="res://Assets/models/vloer.fbx" id="1_pyidc"]
+[ext_resource type="PackedScene" uid="uid://bbuna6cgmgv1c" path="res://Assets/models/wall.fbx" id="2_vvh5c"]
+[ext_resource type="PackedScene" uid="uid://b67j7b1oi0kkf" path="res://Assets/models/wall with doorhol.fbx" id="3_vvh5c"]
+[ext_resource type="PackedScene" uid="uid://dgrr3cvk6fyr" path="res://Assets/models/bar_2.fbx" id="4_28aoi"]
+[ext_resource type="PackedScene" uid="uid://d0gvsgd14wqn8" path="res://Assets/models/chair.fbx" id="5_jnlp7"]
+[ext_resource type="PackedScene" uid="uid://68wadwm01w3d" path="res://Assets/models/candel.fbx" id="6_l8v81"]
+[ext_resource type="Script" uid="uid://cbl5tx4c81qt0" path="res://flicker.gd" id="6_qwhpj"]
+[ext_resource type="PackedScene" uid="uid://cb8q5p4oa17l" path="res://Assets/flame/flame.tscn" id="7_vyht1"]
+[ext_resource type="PackedScene" uid="uid://bl6f8yyq3aliq" path="res://Assets/models/door.fbx" id="8_bf3um"]
+[ext_resource type="PackedScene" uid="uid://bymxj5ngyw6yc" path="res://Assets/models/box.fbx" id="10_tw3kd"]
+[ext_resource type="PackedScene" uid="uid://dv2kif8da301l" path="res://Assets/models/wood pole.fbx" id="12_qw60f"]
+[ext_resource type="PackedScene" uid="uid://dv65tm4h2roqj" path="res://Assets/models/body.tscn" id="13_eji0w"]
+[ext_resource type="Texture2D" uid="uid://dyjb0qc77hlgs" path="res://Assets/cardTextures/blank.png" id="14_qwhpj"]
+
+[sub_resource type="Environment" id="Environment_26a3e"]
+background_energy_multiplier = 0.1
+ambient_light_energy = 0.0
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.1
+volumetric_fog_albedo = Color(0, 0, 0, 1)
+volumetric_fog_emission_energy = 10.0
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_sq7yr"]
+frequency = 0.1
+
+[sub_resource type="NoiseTexture3D" id="NoiseTexture3D_qt76e"]
+noise = SubResource("FastNoiseLite_sq7yr")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a8xpl"]
+cull_mode = 2
+albedo_texture = ExtResource("14_qwhpj")
+
+[sub_resource type="QuadMesh" id="QuadMesh_26a3e"]
+material = SubResource("StandardMaterial3D_a8xpl")
+size = Vector2(0.67, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6l4u4"]
+albedo_color = Color(0.82572114, 0.62231237, 0.36273342, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_26a3e"]
+material = SubResource("StandardMaterial3D_6l4u4")
+size = Vector3(0.67, 1, 0.01)
+
+[node name="Root" type="Node3D" unique_id=1180066170]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1734695327]
+environment = SubResource("Environment_26a3e")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=764138658]
+
+[node name="Objects" type="Node3D" parent="." unique_id=1758704438]
+
+[node name="wine bottle" parent="Objects" unique_id=1966229483 instance=ExtResource("1_gd4vy")]
+transform = Transform3D(-2.649862e-08, -0.60621774, 0.35, 0.7, -3.059797e-08, 0, 1.5298985e-08, 0.35, 0.60621774, 4.950296, 0.16993964, 3.6885767)
+
+[node name="vloer" parent="Objects" unique_id=864124519 instance=ExtResource("1_pyidc")]
+
+[node name="wall" parent="Objects" unique_id=592468419 instance=ExtResource("2_vvh5c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8751302, 0, -5.014027)
+
+[node name="wall with doorhol" parent="Objects" unique_id=1490628811 instance=ExtResource("3_vvh5c")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 6.6041822, -0.017981052, 4.3343396)
+
+[node name="CandleLight" type="OmniLight3D" parent="Objects" unique_id=1922080003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7413187, 1.0540092, 4.8278584)
+light_color = Color(0.8285371, 0.73699045, 1.540184e-06, 1)
+light_energy = 0.2
+shadow_enabled = true
+shadow_bias = 0.0
+shadow_opacity = 0.98
+shadow_blur = 10.0
+omni_range = 0.95
+script = ExtResource("6_qwhpj")
+noise = SubResource("NoiseTexture3D_qt76e")
+
+[node name="bar_2" parent="Objects" unique_id=218082627 instance=ExtResource("4_28aoi")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.875715, -0.4646058, 2.812718)
+
+[node name="chair" parent="Objects" unique_id=208229264 instance=ExtResource("5_jnlp7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0038357, -0.17833829, 6.3620944)
+
+[node name="chair2" parent="Objects" unique_id=1840857426 instance=ExtResource("5_jnlp7")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3.9716809, -0.22395301, 5.4612136)
+
+[node name="chair3" parent="Objects" unique_id=2014376676 instance=ExtResource("5_jnlp7")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 3.3909256, -0.15294266, 3.7083607)
+
+[node name="chair4" parent="Objects" unique_id=510742778 instance=ExtResource("5_jnlp7")]
+transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 1.4220016, -0.22395301, 4.2964272)
+
+[node name="candle" parent="Objects" unique_id=2073304866 instance=ExtResource("6_l8v81")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.122322, -0.19115674, 5.1055417)
+
+[node name="flame" parent="Objects/candle" unique_id=1721807044 instance=ExtResource("7_vyht1")]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0.6171448, 1.1184676, -0.2741189)
+
+[node name="door" parent="Objects" unique_id=1762432124 instance=ExtResource("8_bf3um")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 6.60527, 0, 4.6864905)
+
+[node name="box" parent="Objects" unique_id=378998002 instance=ExtResource("10_tw3kd")]
+transform = Transform3D(0.9999779, 0.0066500683, 0, -0.0066500683, 0.9999779, 0, 0, 0, 1, 0.6944215, -0.30440235, -3.8524709)
+
+[node name="wood pole" parent="Objects" unique_id=1613380508 instance=ExtResource("12_qw60f")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 1.7413418, 0, 3.4367795)
+
+[node name="wood pole2" parent="Objects" unique_id=60036541 instance=ExtResource("12_qw60f")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 6.4338684, 0, 3.4367795)
+
+[node name="wall2" parent="Objects" unique_id=771329508 instance=ExtResource("2_vvh5c")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.5000615, 0, 12.788572)
+
+[node name="body" parent="Objects" unique_id=1587446387 instance=ExtResource("13_eji0w")]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 2.748417, -0.61173415, 4.184857)
+
+[node name="FloorLight" type="OmniLight3D" parent="Objects" unique_id=894029970]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 0.27138156, 3.4199162)
+light_energy = 0.035
+shadow_enabled = true
+shadow_bias = 0.0
+shadow_opacity = 0.98
+shadow_blur = 10.0
+
+[node name="vloer2" parent="Objects" unique_id=1004234813 instance=ExtResource("1_pyidc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8854113, 0)
+
+[node name="body2" parent="Objects" unique_id=252112887 instance=ExtResource("13_eji0w")]
+transform = Transform3D(-3.059797e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.059797e-08, 1.9662671, -0.5971521, 5.053093)
+
+[node name="body3" parent="Objects" unique_id=1394179690 instance=ExtResource("13_eji0w")]
+transform = Transform3D(-3.059797e-08, 0, -0.7, 0, 0.7, 0, 0.7, 0, -3.059797e-08, 3.484254, -0.5971521, 4.9620523)
+
+[node name="PlayerLight" type="OmniLight3D" parent="Objects" unique_id=216225429]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5551472, 1.2367551, 5.4318886)
+light_color = Color(0.8285371, 0.73699045, 1.540184e-06, 1)
+light_energy = 0.2
+shadow_enabled = true
+shadow_bias = 0.0
+shadow_opacity = 0.98
+shadow_blur = 10.0
+omni_range = 0.4
+script = ExtResource("6_qwhpj")
+noise = SubResource("NoiseTexture3D_qt76e")
+
+[node name="Player" type="Node3D" parent="." unique_id=89060603]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6992095, 1.0429318, 5.522321)
+
+[node name="Camera3D" type="Camera3D" parent="Player" unique_id=715553545]
+transform = Transform3D(1, 0, 0, 0, 0.8965723, 0.44289738, 0, -0.44289738, 0.8965723, 0, 0.27867758, 0.22539282)
+
+[node name="TestLight" type="OmniLight3D" parent="." unique_id=1881773175]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 0.27138156, 3.4199162)
+visible = false
+light_energy = 5.0
+shadow_enabled = true
+shadow_bias = 0.0
+shadow_opacity = 0.98
+shadow_blur = 10.0
+omni_range = 50.0
+
+[node name="Card" type="Node3D" parent="." unique_id=91832041]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.671259, 1.0401561, 5.17739)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Card" unique_id=1340368428]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.012005806)
+mesh = SubResource("QuadMesh_26a3e")
+
+[node name="Body" type="MeshInstance3D" parent="Card" unique_id=1065006429]
+mesh = SubResource("BoxMesh_26a3e")

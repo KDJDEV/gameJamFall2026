@@ -1,0 +1,383 @@
+[gd_scene format=3 uid="uid://cb8q5p4oa17l"]
+
+[ext_resource type="Texture2D" uid="uid://jpljgujhjk8n" path="res://Assets/flame/textures/noise_02.png" id="5_js81g"]
+[ext_resource type="Texture2D" uid="uid://cny10st6ks4wp" path="res://Assets/flame/textures/gradient_mask_01.png" id="6_mw6jo"]
+[ext_resource type="Texture2D" uid="uid://cx5tg67lary84" path="res://Assets/flame/textures/noise_01.png" id="7_dfbx6"]
+[ext_resource type="Texture2D" uid="uid://ptk6hav3y6tr" path="res://Assets/flame/textures/gradient_radial_05.png" id="8_jsie4"]
+
+[sub_resource type="Shader" id="Shader_5cef4"]
+code = "shader_type particles;
+render_mode disable_velocity;
+
+const float DEG_TO_RAD = PI / 180.0;
+const uint AMOUNT = uint(1);
+
+struct Particle {
+	uint seed;
+	float delta;
+	float lifetime;
+	uint index;
+	uint number;
+	float age;
+	float normalized_age;
+	float normalized_index;
+	float normalized_number;
+	vec3 initial_position;
+	vec3 initial_scale;
+	vec4 initial_color;
+	vec3 initial_velocity;
+	float radial_velocity;
+	vec3 orbital_axis;
+	float initial_orbital_speed;
+	vec3 spawn_direction;
+	vec3 position;
+	vec3 scale;
+	vec4 color;
+	vec3 velocity;
+	vec3 orbital_velocity;
+	float orbital_speed;
+	vec3 rotation_axis;
+	float initial_rotation;
+	float rotation;
+	mat3 orientation;
+	vec3 force;
+	float animation_offset;
+	float animation_speed;
+	mat4 emission_transform;
+	mat4 previous_transform;
+	bool just_spawned;
+	bool collided;
+	vec3 collision_normal;
+	float collision_depth;
+};
+
+float remap(float value, float input_min, float input_max, float output_min, float output_max) {
+	float v = clamp(value, input_min, input_max);
+	return (v - input_min) / (input_max - input_min) * (output_max - output_min) + output_min;
+}
+
+float rand(inout uint seed) {
+	int k;
+	int s = int(seed);
+	if (s == 0) {
+		s = 305420679;
+	}
+	k = s / 127773;
+	s = 16807 * (s - k * 127773) - 2836 * k;
+	if (s < 0) {
+		s += 2147483647;
+	}
+	seed = uint(s);
+	return float(seed % uint(65536)) / 65535.0;
+}
+
+float rand_range(inout uint seed, float l, float h) {
+	return l + (h - l) * rand(seed);
+}
+
+uint hash(uint x) {
+	x = ((x >> uint(16)) ^ x) * uint(73244475);
+	x = ((x >> uint(16)) ^ x) * uint(73244475);
+	x = (x >> uint(16)) ^ x;
+	return x;
+}
+
+vec3 normalize_or_zero(vec3 v) {
+  return length(v) > 0.0 ? normalize(v) : vec3(0.0, 0.0, 0.0);
+}
+
+vec3 normalize_or_up(vec3 v) {
+  return length(v) > 0.0 ? normalize(v) : vec3(0.0, 1.0, 0.0);
+}
+
+vec4 quat(vec3 axis, float angle) {
+  float s = sin(angle / 2.0);
+  return vec4(axis.x * s, axis.y * s, axis.z * s, cos(angle / 2.0));
+}
+
+vec4 quat_rotation_to(vec3 from, vec3 to) {
+	vec3 xunit = vec3(1.0, 0.0, 0.0);
+	vec3 yunit = vec3(0.0, 1.0, 0.0);
+	float dot = dot(from, to);
+	if (dot < -0.999999) {
+	    vec3 axis = cross(xunit, from);
+	    if (length(axis) < 0.000001) {
+	    	axis = cross(yunit, from);
+	    }
+	    axis = normalize(axis);
+	    return quat(axis, PI);
+	} else if (dot > 0.999999) {
+		return vec4(0.0, 0.0, 0.0, 1.0);
+	} else {
+		vec3 axis = cross(from, to);
+		return normalize(vec4(axis, 1.0 + dot));
+	}
+}
+
+vec3 rotated(vec3 v, vec3 axis, float angle) {
+  vec4 q = quat(axis, angle);
+  vec3 t = cross(q.xyz, v) + q.w * v;
+  return v + 2.0 * cross(q.xyz, t);
+}
+
+vec3 rotated(vec3 v, vec4 q) {
+  vec3 t = cross(q.xyz, v) + q.w * v;
+  return v + 2.0 * cross(q.xyz, t);
+}
+
+mat3 rotated(mat3 m, vec4 q) {
+  return mat3(rotated(m[0], q), rotated(m[1], q), rotated(m[2], q));
+}
+
+float normalized_by_amount(uint n) {
+	return float(n) / float(max(AMOUNT, 1u));
+}
+void update_orbital_velocity(inout Particle particle, mat4 emission_transform, mat4 transform) {
+	if (abs(particle.orbital_speed) < 0.01 || particle.delta < 0.001) { return; }
+	vec3 local_pos = (inverse(emission_transform) * transform[3]).xyz;
+	vec3 next = rotated(local_pos, particle.orbital_axis, particle.orbital_speed * particle.delta);
+	particle.position = (emission_transform * vec4(next, 0.0)).xyz;
+	particle.orbital_velocity = (next - local_pos) / particle.delta;
+}
+
+void apply_radial_velocity(inout Particle particle) {
+	vec3 d = particle.position;
+	float mag = min(length(d), abs(particle.radial_velocity) * particle.delta);
+	particle.position += normalize_or_zero(d) * mag * sign(particle.radial_velocity);
+}
+
+void initialize(inout Particle particle) {
+	particle.initial_position = vec3(0.0);
+	particle.initial_color = vec4(1.0);
+	particle.initial_scale = vec3(1.0);
+	particle.initial_velocity = vec3(0.0);
+	particle.initial_orbital_speed = 0.0;
+	particle.spawn_direction = vec3(0.0);
+	particle.animation_offset = 0.0;
+	particle.animation_speed = 1.0;
+	particle.rotation_axis = vec3(1.0, 0.0, 0.0);
+	particle.initial_rotation = 0.0;
+	particle.radial_velocity = 0.0;
+	particle.orbital_axis = vec3(0.0, 1.0, 0.0);
+	particle.orbital_velocity = vec3(0.0);
+	particle.scale = particle.initial_scale;
+	particle.color = particle.initial_color;
+	particle.orbital_speed = particle.initial_orbital_speed;
+}
+
+void start() {
+	Particle particle;
+	// Use INDEX instead of NUMBER for repeatability.
+	uint base_number = NUMBER;
+	particle.seed = hash(base_number + uint(1) + RANDOM_SEED);
+	particle.lifetime = LIFETIME;
+	particle.index = INDEX;
+	particle.number = NUMBER;
+	particle.age = 0.0;
+	particle.normalized_age = 0.0;
+	particle.normalized_index = normalized_by_amount(INDEX);
+	particle.normalized_number = normalized_by_amount(NUMBER);
+	particle.position = vec3(0.0);
+	initialize(particle);
+	if (rand(particle.seed) > AMOUNT_RATIO) {
+		ACTIVE = false;
+	}
+	if (RESTART_CUSTOM) {
+		CUSTOM = vec4(0.0);
+		CUSTOM.x = particle.initial_rotation;
+	}
+	if (RESTART_COLOR) {
+		COLOR = particle.initial_color;
+	}
+	if (RESTART_ROT_SCALE) {
+		TRANSFORM[0].xyz = rotated(vec3(1.0, 0.0, 0.0), particle.rotation_axis, particle.initial_rotation) * particle.initial_scale.x;
+		TRANSFORM[1].xyz = rotated(vec3(0.0, 1.0, 0.0), particle.rotation_axis, particle.initial_rotation) * particle.initial_scale.y;
+		TRANSFORM[2].xyz = rotated(vec3(0.0, 0.0, 1.0), particle.rotation_axis, particle.initial_rotation) * particle.initial_scale.z;
+	}
+	if (RESTART_POSITION) {
+		TRANSFORM[3].xyz = particle.initial_position;
+		TRANSFORM = EMISSION_TRANSFORM * TRANSFORM;
+	}
+	if (RESTART_VELOCITY) {
+		VELOCITY = (EMISSION_TRANSFORM * vec4(particle.initial_velocity, 0.0)).xyz;
+		VELOCITY += EMITTER_VELOCITY * 0.0;//inherit_emitter_velocity_ratio;
+	}
+}
+
+void process() {
+	Particle particle;
+	// Use INDEX instead of NUMBER for repeatability.
+	uint base_number = NUMBER;
+	particle.seed = hash(base_number + uint(1) + RANDOM_SEED);
+	particle.delta = DELTA;
+	particle.lifetime = LIFETIME;
+	particle.index = INDEX;
+	particle.number = NUMBER;
+	particle.age = 0.0;
+	particle.normalized_age = 0.0;
+	particle.normalized_index = normalized_by_amount(INDEX);
+	particle.normalized_number = normalized_by_amount(NUMBER);
+	particle.position = TRANSFORM[3].xyz;
+	particle.velocity = VELOCITY;
+	particle.orientation = mat3(
+		normalize(TRANSFORM[0].xyz),
+		normalize(TRANSFORM[1].xyz),
+		normalize(TRANSFORM[2].xyz));
+	particle.force = vec3(0.0);
+	particle.emission_transform = EMISSION_TRANSFORM;
+	particle.previous_transform = TRANSFORM;
+	particle.rotation = CUSTOM.x;
+	particle.just_spawned = CUSTOM.y == 0.0;
+	particle.collided = COLLIDED;
+	particle.collision_normal = COLLISION_NORMAL;
+	particle.collision_depth = COLLISION_DEPTH;
+	particle.color = COLOR;
+	initialize(particle);
+	CUSTOM.y += DELTA / particle.lifetime;
+	CUSTOM.y = mix(CUSTOM.y, 1.0, INTERPOLATE_TO_END);
+	CUSTOM.y = clamp(CUSTOM.y, 0.0, 1.0);
+	particle.age = CUSTOM.y * particle.lifetime;
+	particle.normalized_age = CUSTOM.y;
+	if (abs(particle.orbital_speed) >= 0.01 && particle.delta >= 0.001) {
+		vec3 local_pos = (inverse(particle.emission_transform) * vec4(particle.position, 1.0)).xyz;
+		vec3 next = rotated(local_pos, particle.orbital_axis, particle.orbital_speed * particle.delta);
+		particle.position = (particle.emission_transform * vec4(next, 0.0)).xyz;
+		particle.orbital_velocity = (next - local_pos) / particle.delta;
+	}
+	if (abs(particle.radial_velocity) >= 0.01 && particle.delta >= 0.001) {
+		vec3 local_pos = (inverse(particle.emission_transform) * vec4(particle.position, 1.0)).xyz;
+		vec3 d = local_pos;
+		float mag = min(length(d), abs(particle.radial_velocity) * particle.delta);
+		vec3 next = local_pos + normalize_or_zero(d) * mag * sign(particle.radial_velocity);
+		particle.position = (particle.emission_transform * vec4(next, 0.0)).xyz;
+	}
+	particle.position += particle.velocity * particle.delta;
+	VELOCITY = particle.velocity;
+	TRANSFORM[0].xyz = particle.orientation[0] * particle.scale.x;
+	TRANSFORM[1].xyz = particle.orientation[1] * particle.scale.y;
+	TRANSFORM[2].xyz = particle.orientation[2] * particle.scale.z;
+	TRANSFORM[3].xyz = particle.position;
+	COLOR = particle.color;
+	CUSTOM.x = particle.rotation;
+	
+	if (particle.age >= LIFETIME) { ACTIVE = false;  }
+}
+
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ju6t0"]
+shader = SubResource("Shader_5cef4")
+
+[sub_resource type="Shader" id="Shader_j17v3"]
+code = "shader_type spatial;
+render_mode unshaded, cull_disabled;
+
+uniform float opacity = 1.0;
+uniform float emission = 1.0;
+uniform vec3 color : source_color;
+
+uniform sampler2D main_tex : source_color, filter_linear_mipmap, repeat_disable;
+
+uniform sampler2D distortion_tex : source_color, filter_linear_mipmap, repeat_enable;
+uniform vec2 distortion_tiling = vec2(1.0);
+uniform vec2 distortion_offset = vec2(0.0);
+uniform vec2 distortion_speed = vec2(0.0);
+
+uniform sampler2D distortion_mask_tex : source_color, filter_linear_mipmap, repeat_disable;
+
+uniform vec2 distortion_power = vec2(0.0);
+
+uniform sampler2D dissolve_tex : source_color, filter_linear_mipmap, repeat_enable;
+uniform vec2 dissolve_tiling = vec2(1.0);
+uniform float dissolve_feather = 0.025;
+uniform sampler2D dissolve_curve_tex : filter_linear, repeat_disable;
+
+float remap(float value, float input_min, float input_max, float output_min, float output_max) {
+	return (clamp(value, input_min, input_max) - input_min) / (input_max - input_min) * (output_max - output_min) + output_min;
+}
+
+varying flat uint instance_id;
+varying float age;
+
+void vertex()
+{
+	instance_id = uint(INSTANCE_ID);
+	age = INSTANCE_CUSTOM.y;
+	vec3 up = normalize(MODEL_MATRIX[1].xyz);
+	vec3 right = normalize(cross(up, MAIN_CAM_INV_VIEW_MATRIX[2].xyz));
+	vec3 front = normalize(cross(right, up));
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(
+		vec4(right, 0.0),
+		vec4(up, 0.0),
+		vec4(front, 0.0),
+		MODEL_MATRIX[3]);
+	MODELVIEW_MATRIX = MODELVIEW_MATRIX * mat4(
+			vec4(length(MODEL_MATRIX[0].xyz), 0.0, 0.0, 0.0),
+			vec4(0.0, length(MODEL_MATRIX[1].xyz), 0.0, 0.0),
+			vec4(0.0, 0.0, length(MODEL_MATRIX[2].xyz), 0.0),
+			vec4(0.0, 0.0, 0.0, 1.0));
+	MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
+}
+
+void fragment()
+{
+	float distortion_s = texture(distortion_tex, UV * distortion_tiling + distortion_offset + distortion_speed * TIME).r;
+	float mask = texture(distortion_mask_tex, UV).r;
+	distortion_s *= 1.0 - mask;
+	vec2 distortion = distortion_power * distortion_s;
+	vec4 main_s = texture(main_tex, UV + distortion);
+	float dissolve_s = texture(dissolve_tex, UV * dissolve_tiling + distortion * dissolve_tiling + distortion_speed * TIME * 0.5).r;
+	float dissolve_t = texture(dissolve_curve_tex, vec2(age)).r;
+	dissolve_t = remap(dissolve_t, 0.0, 1.0, -dissolve_feather, 1.0);
+	ALPHA = COLOR.a;
+	ALPHA *= main_s.r;
+	ALPHA = clamp(ALPHA * opacity, 0.0, 1.0);
+	ALPHA = smoothstep(0.0, 0.025, ALPHA);
+	float dissolve = clamp(remap(1.0 - mask, 0.9, 1.0, 1.0, 0.0) + dissolve_s, 0.0, 1.0);
+	ALPHA *= smoothstep(dissolve_t, dissolve_t + dissolve_feather, dissolve);
+	ALBEDO = COLOR.rgb * emission * color;
+}
+"
+
+[sub_resource type="Curve" id="Curve_1t2d6"]
+_data = [Vector2(0, 0.94868416), 0.0, 0.0, 0, 1]
+point_count = 1
+
+[sub_resource type="CurveTexture" id="CurveTexture_cctiu"]
+texture_mode = 1
+curve = SubResource("Curve_1t2d6")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_nvyip"]
+render_priority = 0
+shader = SubResource("Shader_j17v3")
+shader_parameter/opacity = 1.0
+shader_parameter/emission = 3.0
+shader_parameter/color = Color(1, 0.658, 0.24000001, 1)
+shader_parameter/main_tex = ExtResource("8_jsie4")
+shader_parameter/distortion_tex = ExtResource("7_dfbx6")
+shader_parameter/distortion_tiling = Vector2(0.4, 0.4)
+shader_parameter/distortion_offset = Vector2(0, 0)
+shader_parameter/distortion_speed = Vector2(0.1, 0.3)
+shader_parameter/distortion_mask_tex = ExtResource("6_mw6jo")
+shader_parameter/distortion_power = Vector2(0.2, 1.27)
+shader_parameter/dissolve_tex = ExtResource("5_js81g")
+shader_parameter/dissolve_tiling = Vector2(0.3, 0.3)
+shader_parameter/dissolve_feather = 0.025
+shader_parameter/dissolve_curve_tex = SubResource("CurveTexture_cctiu")
+
+[sub_resource type="QuadMesh" id="QuadMesh_tkrqg"]
+material = SubResource("ShaderMaterial_nvyip")
+size = Vector2(1, 2)
+center_offset = Vector3(0, 0.5, 0)
+
+[node name="Node3D" type="Node3D" unique_id=1721807044]
+
+[node name="GPUParticles3D" type="GPUParticles3D" parent="." unique_id=162241416]
+cast_shadow = 0
+amount = 1
+fixed_fps = 60
+interpolate = false
+fract_delta = false
+local_coords = true
+process_material = SubResource("ShaderMaterial_ju6t0")
+draw_pass_1 = SubResource("QuadMesh_tkrqg")

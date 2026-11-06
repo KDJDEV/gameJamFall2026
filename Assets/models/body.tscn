@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://dv65tm4h2roqj"]
+
+[ext_resource type="PackedScene" uid="uid://n381xirjigar" path="res://Assets/models/body.glb" id="1_3dgb7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eji0w"]
+albedo_color = Color(0, 0.15294118, 0, 1)
+
+[node name="body" unique_id=1587446387 instance=ExtResource("1_3dgb7")]
+
+[node name="Torso_011" parent="." index="0" unique_id=338371415]
+surface_material_override/0 = SubResource("StandardMaterial3D_eji0w")
