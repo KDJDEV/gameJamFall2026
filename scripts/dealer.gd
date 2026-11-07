@@ -10,7 +10,9 @@ extends Node
 ##                       in `reshuffle_source`, the final pile).
 ##   collect_and_deal  - shuffles the final pile into the draw pile, deals every hand back up
 ##                       to a full hand and starts round two.
-##   start_final_phase - the last round: nobody draws any more and hands are emptied.
+##   start_final_phase - the last round: AIs draw and discard as normal, but once the pile they
+##                       draw from is empty they keep discarding, so every card goes all the way
+##                       round the table and nobody is left holding cards.
 ## It also decides when the hands may play (not while dealing or shuffling, or while a
 ## dialogue sequence marked "disable_play" is running).
 signal deal_finished

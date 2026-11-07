@@ -47,7 +47,8 @@ var play_enabled: bool = true:
 var awaiting_deal: bool = false
 ## Held still while the player peeks at this hand.
 var frozen: bool = false
-## Set once the final round starts: no more drawing, the hand just gets emptied.
+## Set once the final round starts. AI hands then draw and discard as normal while the pile they
+## draw from has cards, and keep discarding once it is empty, so every card goes round the table.
 var final_phase: bool = false
 var _full_hand_size: int = 5
 var _auto_timer: Timer
@@ -93,10 +94,15 @@ func _auto_play_turn() -> void:
 	if draw_in_progress or not play_enabled or frozen:
 		return
 	if final_phase:
-		# After the last card the AI only gets rid of what is left in its hand.
-		if not cards.is_empty():
+		# Final round: the AI plays as normal while the pile it draws from has cards, but once
+		# that pile is empty it keeps discarding, so every card goes on round the table.
+		if cards.size() < _full_hand_size and not _draw_pile_is_empty():
+			draw_card()
+		elif not cards.is_empty():
 			selected_index = _choose_discard_index()
 			discard_selected()
+			if not _draw_pile_is_empty():
+				draw_card()
 		return
 	if cards.size() < _full_hand_size:
 		draw_card()
@@ -238,7 +244,7 @@ func set_held_mode(enabled: bool, peeking: bool = false) -> void:
 
 func _process(delta: float) -> void:
 	super._process(delta)
-	if auto_draw and play_enabled and not final_phase and not held_mode and not _returning and not draw_in_progress \
+	if auto_draw and play_enabled and not held_mode and not _returning and not draw_in_progress \
 			and cards.size() < _full_hand_size and not _draw_pile_is_empty():
 		draw_card()
 	if held_mode:

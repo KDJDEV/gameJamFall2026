@@ -20,7 +20,7 @@
 [ext_resource type="PackedScene" uid="uid://cxj4ah5krwotq" path="res://Assets/models/mug.fbx" id="15_ub8w1"]
 [ext_resource type="Script" uid="uid://burobgjgwpdqx" path="res://scripts/card_pile.gd" id="16_sq7yr"]
 [ext_resource type="Script" uid="uid://cvohkw35qelwi" path="res://scripts/card_deck.gd" id="17_50g4q"]
-[ext_resource type="Resource" path="res://data/deck_config.tres" id="18_3dlgs"]
+[ext_resource type="Resource" uid="uid://c53wx8ffpaqhw" path="res://data/deck_config.tres" id="18_3dlgs"]
 [ext_resource type="Script" uid="uid://r4xf41jg7d67" path="res://scripts/table_set_area.gd" id="19_vte5o"]
 [ext_resource type="AudioStream" uid="uid://cm887m6dnvqxm" path="res://Assets/audio/door.mp3" id="20_door"]
 [ext_resource type="AudioStream" uid="uid://bv8w17lshgqbi" path="res://Assets/audio/ambience.wav" id="21_ambience"]
