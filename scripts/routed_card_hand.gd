@@ -273,6 +273,34 @@ func _lap_pose(offset: float) -> Vector3:
 	var world := lap_anchor.global_position + anchor_offset + lap_anchor.global_basis.x * offset * card_spacing
 	return to_local(world)
 
+## Lays every card in the hand face down on the table in front of the owner, e.g. when the game is over.
+func put_cards_down() -> void:
+	frozen = true
+	auto_draw = false
+	if set_area == null or cards.is_empty():
+		return
+	var laid := cards.duplicate()
+	cards.clear()
+	selected_index = 0
+	set_held_mode(false)
+	_update_selection()
+	var middle := (laid.size() - 1) * 0.5
+	for index in laid.size():
+		var card := laid[index] as Node3D
+		card.visible = true
+		if card.has_method("set_selected"):
+			card.set_selected(false)
+		card.reparent(set_area, true)
+		# Local +Z of the set area points toward the owner; a quarter turn about X lays the card face down.
+		var local_position := Vector3((index - middle) * 0.06, 0.0015 + index * 0.002, 0.2)
+		var local_rotation := Vector3(PI * 0.5, randf_range(-0.12, 0.12), 0.0)
+		if card.has_method("set_hand_pose"):
+			card.set_hand_pose(local_position, local_rotation)
+		else:
+			card.position = local_position
+			card.rotation = local_rotation
+	_play_card_sound(discard_sounds)
+
 func swap_card_with(other: Node3D, my_index: int, their_index: int) -> void:
 	var mine := cards[my_index]
 	var theirs: Node3D = other.cards[their_index]

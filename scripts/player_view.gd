@@ -1,3 +1,4 @@
+class_name PlayerView
 extends Node3D
 
 ## Controls use the move_up / move_down / move_left / move_right / select input actions
@@ -6,7 +7,13 @@ extends Node3D
 ## returns to your hand. From the table, left or right leans over to peek at the neighbouring
 ## player's hand: up/down pick one of their cards (up goes to the previous card, down to the next),
 ## select swaps it with your selected card, left or right steps back to the table view.
+## The longer you stay leaned over, the louder your heartbeat gets and the more the screen closes in.
 enum ViewState { NORMAL, TABLE, PEEK }
+
+## You leaned over to peek at this player's hand.
+signal peek_started(hand_node: Node3D)
+## You swapped one of your cards with a card from this player's hand.
+signal swapped(hand_node: Node3D)
 
 @export var camera: Camera3D
 @export var hand: Node3D
@@ -39,6 +46,33 @@ enum ViewState { NORMAL, TABLE, PEEK }
 @export_range(0.0, 5.0) var door_audio_lead: float = 2.5
 @export var test_door_look_delay: float = 0.0
 
+@export_group("Peek tension")
+## Looped while you are leaned over; it gets louder and faster the longer you stay.
+@export var heartbeat_stream: AudioStream = preload("res://Assets/audio/heartbeat.wav")
+@export_range(-60.0, 12.0) var heartbeat_min_db: float = -10.0
+@export_range(-60.0, 24.0) var heartbeat_max_db: float = 14.0
+## Playback speed of the heartbeat when you are calm and when the owner is about to look back down.
+@export_range(0.5, 1.5) var heartbeat_calm_pitch: float = 0.85
+@export_range(0.5, 2.0) var heartbeat_danger_pitch: float = 1.2
+## Where the beats fall in the clip (seconds); the vignette pulses on them.
+@export var heartbeat_beat_times: PackedFloat32Array = PackedFloat32Array([0.03, 0.29])
+## How tense it is while you are leaned over and safe (0 to 1). It only climbs above this when the owner
+## of the hand is about to stop staring at someone else and look back at their cards.
+@export_range(0.0, 1.0) var calm_tension: float = 0.3
+## How fast the tension rises when the danger grows (per second).
+@export_range(0.1, 5.0) var tension_rise_speed: float = 1.5
+@export_range(0.0, 1.0) var vignette_max_strength: float = 0.6
+## How solid the red gets at the very edge of the screen, at full strength.
+@export_range(0.0, 1.0) var vignette_max_alpha: float = 0.75
+## The room is nearly black, so a dark red edge shows up far better than black.
+@export var vignette_color := Color(0.5, 0.0, 0.03)
+
+## Set every frame by the cheat watcher while you peek: 0 while the owner of the hand is staring at
+## someone else, rising to 1 as they are about to look back down at their cards.
+var peek_danger: float = 0.0
+## 0 to 1: how tense you are while leaned over, which drives the heartbeat and the vignette.
+var tension: float = 0.0
+
 var view_state: ViewState = ViewState.NORMAL
 var _looking_at_door: bool = false
 var _camera_rest_quaternion: Quaternion
@@ -51,11 +85,30 @@ var _hold_repeat := HoldRepeat.new(0.17, 0.17, &"move_up", &"move_down")
 ## 1 or -1: which way up/down scroll through the peeked hand, flipped for the hand on the right so the
 ## cards read in the same direction from where you lean.
 var _peek_scroll_sign: int = 1
+var _heartbeat: AudioStreamPlayer
+var _vignette_material: ShaderMaterial
+
+const VIGNETTE_CODE := """
+shader_type canvas_item;
+uniform float strength : hint_range(0.0, 1.0) = 0.0;
+uniform float pulse : hint_range(0.0, 1.0) = 0.0;
+uniform float max_alpha : hint_range(0.0, 1.0) = 0.75;
+uniform vec4 tint : source_color = vec4(0.5, 0.0, 0.03, 1.0);
+void fragment() {
+	// 0 at the middle of the screen, 1 in the corners.
+	float d = length((UV - vec2(0.5)) * vec2(1.4, 1.0)) / 0.86;
+	float edge = mix(0.8, 0.05, strength);
+	float a = smoothstep(edge, edge + 0.5, d) * clamp(strength * 2.0, 0.0, 1.0) * max_alpha;
+	a *= 0.75 + 0.25 * pulse;
+	COLOR = vec4(tint.rgb, a);
+}
+"""
 
 func _ready() -> void:
 	_camera_rest_quaternion = camera.quaternion
 	_camera_rest_position = camera.position
 	hand.lap_anchor = self
+	_build_tension_effects()
 	_peek_light = OmniLight3D.new()
 	_peek_light.top_level = true
 	_peek_light.light_color = Color(1.0, 0.85, 0.6)
@@ -71,6 +124,7 @@ func _ready() -> void:
 			get_tree().create_timer(test_door_look_delay).timeout.connect(look_at_door)
 
 func _process(delta: float) -> void:
+	_update_tension(delta)
 	if view_state != ViewState.NORMAL and not _looking_at_door and not hand.play_enabled:
 		_end_peek()
 		_enter_normal_view()
@@ -188,6 +242,16 @@ func _start_peek(target: Node3D) -> void:
 	target.set_peek_view(camera_world)
 	var peek_transform := global_transform.affine_inverse() * Transform3D(Basis.IDENTITY, camera_world).looking_at(target.global_position, Vector3.UP)
 	_move_camera(peek_transform.origin, peek_transform.basis.get_rotation_quaternion(), peek_transition_time)
+	peek_started.emit(target)
+
+## The hand you are leaning over to look at, or null.
+func get_peeked_hand() -> Node3D:
+	return _peek_hand
+
+## Throws you back to your own hand, e.g. when you were caught.
+func abort_peek() -> void:
+	_end_peek()
+	_enter_normal_view()
 
 func _end_peek() -> void:
 	if _peek_light.visible:
@@ -209,9 +273,79 @@ func _discard_from_table() -> void:
 func _swap_with_peeked_hand() -> void:
 	if _peek_hand == null or _peek_hand.cards.is_empty() or hand.cards.is_empty():
 		return
+	var victim := _peek_hand
 	hand.swap_card_with(_peek_hand, hand.selected_index, _peek_hand.selected_index)
 	_end_peek()
 	_enter_normal_view()
+	swapped.emit(victim)
+
+func _update_tension(delta: float) -> void:
+	var peeking := view_state == ViewState.PEEK and _peek_hand != null and not _looking_at_door
+	if peeking:
+		# Steady while the owner is staring at someone else; it only climbs as they are about to look back.
+		var target := calm_tension + (1.0 - calm_tension) * clampf(peek_danger, 0.0, 1.0)
+		var speed := tension_rise_speed if target > tension else tension_rise_speed * 0.5
+		tension = move_toward(tension, target, speed * delta)
+	else:
+		tension = maxf(tension - delta * 1.5, 0.0)
+	_vignette_material.set_shader_parameter("strength", tension * vignette_max_strength)
+	_vignette_material.set_shader_parameter("tint", vignette_color)
+	_vignette_material.set_shader_parameter("max_alpha", vignette_max_alpha)
+	if tension <= 0.0:
+		_vignette_material.set_shader_parameter("pulse", 0.0)
+		if _heartbeat.playing:
+			_heartbeat.stop()
+		return
+	if not _heartbeat.playing:
+		_heartbeat.play()
+	_heartbeat.volume_db = lerpf(heartbeat_min_db, heartbeat_max_db, tension)
+	_heartbeat.pitch_scale = lerpf(heartbeat_calm_pitch, heartbeat_danger_pitch, clampf((tension - calm_tension) / maxf(1.0 - calm_tension, 0.01), 0.0, 1.0))
+	_vignette_material.set_shader_parameter("pulse", _beat_pulse(_heartbeat.get_playback_position()))
+
+# 1 right on a beat, fading away quickly after it.
+func _beat_pulse(position_in_clip: float) -> float:
+	var pulse := 0.0
+	for beat_time in heartbeat_beat_times:
+		if position_in_clip >= beat_time:
+			pulse = maxf(pulse, exp(-(position_in_clip - beat_time) * 9.0))
+	return pulse
+
+func _build_tension_effects() -> void:
+	_heartbeat = AudioStreamPlayer.new()
+	_heartbeat.name = "Heartbeat"
+	_heartbeat.stream = _looping(heartbeat_stream)
+	_heartbeat.volume_db = heartbeat_min_db
+	# Backup in case the clip does not loop by itself: start it again as soon as it ends.
+	_heartbeat.finished.connect(func() -> void:
+		if tension > 0.0:
+			_heartbeat.play())
+	add_child(_heartbeat)
+	# Above the scene, below the opening blur (5), the speaker icons (6) and the subtitles (10).
+	var layer := CanvasLayer.new()
+	layer.layer = 4
+	add_child(layer)
+	var shader := Shader.new()
+	shader.code = VIGNETTE_CODE
+	_vignette_material = ShaderMaterial.new()
+	_vignette_material.shader = shader
+	_vignette_material.set_shader_parameter("strength", 0.0)
+	var rect := ColorRect.new()
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.material = _vignette_material
+	layer.add_child(rect)
+
+# Plays the clip over and over without a gap.
+func _looping(stream: AudioStream) -> AudioStream:
+	var wav := stream as AudioStreamWAV
+	if wav == null:
+		return stream
+	wav = wav.duplicate() as AudioStreamWAV
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_begin = 0
+	var bytes_per_frame := (2 if wav.format == AudioStreamWAV.FORMAT_16_BITS else 1) * (2 if wav.stereo else 1)
+	wav.loop_end = wav.data.size() / bytes_per_frame
+	return wav
 
 func _peek_light_target(hand_node: Node3D) -> Vector3:
 	if hand_node.cards.is_empty():

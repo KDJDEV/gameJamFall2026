@@ -11,6 +11,7 @@ extends Node
 ## All cards matched:
 ##   ending_open_door       the player looks at the door, the red light comes in and it swings open
 ##   ending_fade_out        fade to black and close
+##   ending_fade_white      fade to white and close (used when the player is caught cheating a third time)
 ##
 ## Test mode: tick `test_mode` on this node, pick `test_ending` and run the scene. It skips the
 ## opening, lays out a finished table and goes straight to the ending dialogue. Ignored in
@@ -124,6 +125,7 @@ func _ready() -> void:
 		dialogue_manager.register_event("ending_burn", _burn)
 		dialogue_manager.register_event("ending_open_door", _open_door)
 		dialogue_manager.register_event("ending_fade_out", _fade_out)
+		dialogue_manager.register_event("ending_fade_white", _fade_out.bind(Color.WHITE))
 	if test_mode and OS.is_debug_build():
 		_run_test()
 
@@ -170,17 +172,17 @@ func _open_door() -> void:
 		return
 	player_view.look_at_door()
 
-func _fade_out() -> void:
+func _fade_out(color: Color = Color.BLACK) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 100
 	add_child(layer)
-	var black := ColorRect.new()
-	black.color = Color(0.0, 0.0, 0.0, 0.0)
-	black.set_anchors_preset(Control.PRESET_FULL_RECT)
-	black.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(black)
+	var cover := ColorRect.new()
+	cover.color = Color(color, 0.0)
+	cover.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(cover)
 	var fade := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	fade.tween_property(black, "color:a", 1.0, fade_out_duration)
+	fade.tween_property(cover, "color:a", 1.0, fade_out_duration)
 	fade.tween_method(_set_master_volume, 0.0, -60.0, fade_out_duration)
 	await fade.finished
 	await get_tree().create_timer(end_hold_duration).timeout

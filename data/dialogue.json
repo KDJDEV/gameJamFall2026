@@ -5,9 +5,12 @@
 		"cards_left / cards_drawn count the draw pile (deck); cards_drawn counts from when the dealer finishes dealing. A sequence plays once and sequences that trigger together are queued.",
 		"A 'manual' sequence never starts by itself; include it from another sequence with a line like { \"play_sequence\": \"shuffle\" }.",
 		"Line fields: speaker (a DialogueSpeaker speaker_id, or 'player' for internal thoughts), text, and optionally",
+		"look_at (a speaker_id or 'player': the speaker looks at them while the line plays and they glance back; add \"look_back\": false to stop that),",
 		"audio (res:// path to a clip; it plays from the speaker and sets the line length), delay (seconds before the line),",
 		"duration (override the line length), pause (seconds after the line). Without audio the length is estimated from the text.",
-		"event (runs a table action when the line starts: 'shuffle_deck', 'deal_hands', 'wait_for_drain', 'collect_and_deal', 'start_final_phase', 'wait_for_game_end', 'begin_ending', 'ending_cards_to_candle', 'ending_burn', 'ending_open_door' or 'ending_fade_out'); add \"wait\": true to hold the line until it finishes.",
+		"event (runs a table action when the line starts: 'shuffle_deck', 'deal_hands', 'wait_for_drain', 'collect_and_deal', 'start_final_phase', 'wait_for_game_end', 'begin_ending', 'ending_cards_to_candle', 'ending_burn', 'ending_open_door', 'ending_fade_out', 'ending_fade_white' or 'put_cards_down' (everyone lays their cards face down)); add \"wait\": true to hold the line until it finishes.",
+		"Variables: in a line's \"speaker\" and \"look_at\", \"$name\" stands for whoever the code has set with set_variable(\"name\", id); the cheat watcher sets \"$complainer\" to the owner of the hand you were caught looking at.",
+		"Cheating (scripts/cheat_watch.gd): cheat_first_peek and cheat_first_swap play the first time you peek / swap, got_away_1, got_away_2... play after each swap nobody noticed, and caught_1, caught_2, caught_3 play for each strike (the third ends the game).",
 		"A line with no text is a silent step: { \"event\": \"wait_for_drain\", \"wait\": true } runs the action and waits for it; { \"wait\": true } just waits for any action still running.",
 		"Sequence options: \"disable_play\": true stops all players (including you) from playing cards while that sequence runs. \"interrupt\": true makes it start right after the current line of whatever is playing (which then resumes).",
 		"Trigger option: \"round\": 1 or 2 only lets a cards_left trigger fire in that round (round 2 starts once the dealer has collected the final pile and dealt everyone back up to five).",
@@ -20,14 +23,14 @@
 			"disable_play": true,
 			"lines": [
 				{ "speaker": "dealer", "text": "Well, I guess I start since I'm the dealer." },
-				{ "speaker": "left_npc", "text": "Why did they choose you to be the dealer anyway?" },
-				{ "speaker": "dealer", "text": "Probably because I'm the worst criminal here." },
-				{ "speaker": "right_npc", "text": "Ha. Don't flatter yourself." },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "Why did they choose you to be the dealer anyway?" },
+				{ "speaker": "dealer", "look_at": "left_npc", "text": "Probably because I'm the worst criminal here." },
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "Ha. Don't flatter yourself." },
 				{ "play_sequence": "shuffle" },
-				{ "speaker": "dealer", "text": "Five cards in hand, no more. Make a set and it goes face up on the table. No arguing.", "event": "deal_hands" },
-				{ "speaker": "left_npc", "text": "And when the deck runs out?" },
-				{ "speaker": "dealer", "text": "I reshuffle. Once. Same as they told us." },
-				{ "speaker": "right_npc", "text": "They told us the rules a dozen times." },
+				{ "speaker": "dealer", "look_at": "player", "text": "Five cards in hand, no more. Make a set and it goes face up on the table. No arguing.", "event": "deal_hands" },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "And when the deck runs out?" },
+				{ "speaker": "dealer", "look_at": "left_npc", "text": "I reshuffle. Once. Same as they told us." },
+				{ "speaker": "right_npc", "look_at": "left_npc", "text": "They told us the rules a dozen times." },
 				{ "speaker": "player", "text": "I can't afford to lose. I'm not dying tonight." },
 				{ "speaker": "player", "text": "I should probably be careful that they're not watching when I peek at their cards." }
 			]
@@ -60,8 +63,8 @@
 			"interrupt": true,
 			"lines": [
 				{ "speaker": "dealer", "text": "That's the last card. Make your final sets, then discard whatever you have left.", "event": "start_final_phase" },
-				{ "speaker": "right_npc", "text": "And then what happens?" },
-				{ "speaker": "dealer", "text": "Nobody told me that part." },
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "And then what happens?" },
+				{ "speaker": "dealer", "look_at": "right_npc", "text": "Nobody told me that part." },
 				{ "speaker": "player", "text": "Nobody told any of us that part." },
 				{ "event": "wait_for_game_end", "wait": true },
 				{ "event": "begin_ending", "wait": true }
@@ -81,7 +84,7 @@
 			"disable_play": true,
 			"lines": [
 				{ "speaker": "player", "text": "To my dismay, Flynn won." },
-				{ "speaker": "left_npc", "text": "Ha ha, see ya losers!", "pause": 1.5 }
+				{ "speaker": "left_npc", "look_at": "player", "text": "Ha ha, see ya losers!", "pause": 1.5 }
 			]
 		},
 		{
@@ -98,7 +101,7 @@
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "dealer", "text": "Seems like you have the most sets.", "pause": 1.5 }
+				{ "speaker": "dealer", "look_at": "player", "text": "Seems like you have the most sets.", "pause": 1.5 }
 			]
 		},
 		{
@@ -106,7 +109,7 @@
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "left_npc", "text": "So what happens now?", "pause": 1.2 }
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "So what happens now?", "pause": 1.2 }
 			]
 		},
 		{
@@ -114,7 +117,7 @@
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "right_npc", "text": "So what happens now?", "pause": 1.2 }
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "So what happens now?", "pause": 1.2 }
 			]
 		},
 		{
@@ -122,8 +125,8 @@
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "dealer", "text": "Are all cards matched?", "pause": 1.5 },
-				{ "speaker": "left_npc", "text": "Yeah, what's the big deal?", "pause": 1.5 },
+				{ "speaker": "dealer", "look_at": "left_npc", "text": "Are all cards matched?", "pause": 1.5 },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "Yeah, what's the big deal?", "pause": 1.5 },
 				{ "event": "ending_open_door" },
 				{ "speaker": "knight", "text": "You are all free to go...", "delay": 8.0, "pause": 1.5 },
 				{ "speaker": "knight", "text": "...except you. I saw what you did, and I'll admit, I'm impressed...", "pause": 1.5 },
@@ -138,19 +141,92 @@
 			"lines": [
 				{ "speaker": "dealer", "text": "We will get rid of the stragglers efficiently.", "pause": 1.2 },
 				{ "event": "ending_cards_to_candle", "wait": true },
-				{ "speaker": "left_npc", "text": "Wait, it's not supposed to work this way!", "event": "ending_burn" },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "Wait, it's not supposed to work this way!", "event": "ending_burn" },
 				{ "wait": true }
+			]
+		},
+		{
+			"id": "cheat_first_peek",
+			"trigger": { "type": "manual" },
+			"lines": [
+				{ "speaker": "player", "text": "I shouldn't, but..." },
+				{ "speaker": "player", "text": "Just one quick look at their cards." }
+			]
+		},
+		{
+			"id": "cheat_first_swap",
+			"trigger": { "type": "manual" },
+			"lines": [
+				{ "speaker": "player", "text": "I shouldn't, but... I need this card more than they do." }
+			]
+		},
+		{
+			"id": "got_away_1",
+			"trigger": { "type": "manual" },
+			"lines": [
+				{ "speaker": "player", "text": "Nobody noticed." },
+				{ "speaker": "player", "text": "That was easier than it should have been." }
+			]
+		},
+		{
+			"id": "got_away_2",
+			"trigger": { "type": "manual" },
+			"lines": [
+				{ "speaker": "player", "text": "Again. And nobody saw." },
+				{ "speaker": "player", "text": "Better not push my luck." }
+			]
+		},
+		{
+			"id": "got_away_3",
+			"trigger": { "type": "manual" },
+			"lines": [
+				{ "speaker": "player", "text": "Three for three. I'm getting good at this." },
+				{ "speaker": "player", "text": "Sooner or later someone is going to catch me." }
+			]
+		},
+		{
+			"id": "caught_1",
+			"trigger": { "type": "manual" },
+			"interrupt": true,
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "$complainer", "look_at": "player", "text": "Hey, stop looking at my cards!" },
+				{ "speaker": "dealer", "look_at": "$complainer", "text": "No arguing." },
+				{ "speaker": "player", "text": "I must steal when they're not looking at their own cards." }
+			]
+		},
+		{
+			"id": "caught_2",
+			"trigger": { "type": "manual" },
+			"interrupt": true,
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "left_npc", "look_at": "player", "text": "Come on. This is the second time you've looked at our cards!" },
+				{ "speaker": "dealer", "look_at": "player", "text": "Pull that trick again, and you'll wish you hadn't." }
+			]
+		},
+		{
+			"id": "caught_3",
+			"trigger": { "type": "manual" },
+			"interrupt": true,
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "$complainer", "look_at": "player", "text": "Alright, you're done.", "event": "put_cards_down" },
+				{ "speaker": "dealer", "look_at": "player", "text": "Guard!", "pause": 1.5 },
+				{ "event": "ending_open_door" },
+				{ "speaker": "dealer", "look_at": "knight", "delay": 9.0, "text": "Someone's trying to be clever. Let them know it's not supposed to work that way.", "pause": 2.0 },
+				{ "event": "ending_fade_white", "wait": true }
 			]
 		},
 		{
 			"id": "five_drawn",
 			"trigger": { "type": "cards_drawn", "value": 5 },
 			"lines": [
-				{ "speaker": "left_npc", "text": "You ever wonder who's paying for all this? The candles, the wine, a whole room just for us." },
-				{ "speaker": "right_npc", "text": "The state. The same people who put us here." },
-				{ "speaker": "dealer", "text": "Rehabilitation through competition. That's what the paperwork called it." },
-				{ "speaker": "left_npc", "text": "I signed mine without reading it. Didn't think anyone read those." },
-				{ "speaker": "right_npc", "text": "Eyes on your own cards, all of you." },
+				{ "speaker": "left_npc", "look_at": "right_npc", "text": "You ever wonder who's paying for all this? The candles, the wine, a whole room just for us." },
+				{ "speaker": "right_npc", "look_at": "left_npc", "text": "The state. The same people who put us here." },
+				{ "speaker": "dealer", "look_at": "left_npc", "text": "Rehabilitation through competition. That's what the paperwork called it." },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "I signed mine without reading it. Didn't think anyone read those." },
+				{ "speaker": "right_npc", "look_at": "player", "text": "Eyes on your own cards, all of you." },
 				{ "speaker": "player", "text": "Nobody here is going to play fair. I shouldn't either." }
 			]
 		}

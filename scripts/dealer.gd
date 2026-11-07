@@ -34,6 +34,7 @@ func _ready() -> void:
 		dialogue_manager.register_event("collect_and_deal", collect_and_deal)
 		dialogue_manager.register_event("start_final_phase", start_final_phase)
 		dialogue_manager.register_event("wait_for_game_end", wait_for_game_end)
+		dialogue_manager.register_event("put_cards_down", put_cards_down)
 		dialogue_manager.play_lock_changed.connect(_on_play_lock_changed)
 	set_process(false)
 
@@ -91,6 +92,12 @@ func collect_and_deal() -> void:
 	_shuffling = false
 	_apply_play_state()
 	shuffle_finished.emit()
+
+## Everyone, you included, lays their cards face down on the table and stops playing.
+func put_cards_down() -> void:
+	for hand in hands:
+		hand.put_cards_down()
+		await get_tree().create_timer(0.15).timeout
 
 func start_final_phase() -> void:
 	for hand in hands:

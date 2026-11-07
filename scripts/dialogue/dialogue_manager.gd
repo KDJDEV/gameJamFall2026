@@ -8,6 +8,9 @@ signal sequence_started(sequence_id: String)
 signal sequence_finished(sequence_id: String)
 signal line_started(speaker_id: String, text: String)
 signal event_finished(event_name: String)
+## A line with "look_at" started: the speaker should look at the target for the line's duration, and
+## the target glances back at the speaker unless the line sets "look_back": false.
+signal look_requested(speaker_id: StringName, target_id: StringName, duration: float, look_back: bool)
 ## Emitted when a sequence marked "disable_play" starts (true) and when the last one ends (false).
 signal play_lock_changed(locked: bool)
 
@@ -35,6 +38,13 @@ var _event_handlers: Dictionary = {}
 var _events_running: int = 0
 var _play_locks: int = 0
 var _round: int = 1
+var _variables: Dictionary = {}
+var _urgent_running: int = 0
+
+signal _urgent_finished
+
+func _enter_tree() -> void:
+	add_to_group("dialogue_manager")
 
 func _ready() -> void:
 	_box = DialogueBox.new()
@@ -92,12 +102,45 @@ func mark_automatic_sequences_played() -> void:
 		if trigger.get("type", "manual") != "manual":
 			_queued_or_played[sequence["id"]] = true
 
+## Sets a value that dialogue lines can use as "$name" in their "speaker" and "look_at" fields,
+## e.g. set_variable("complainer", "left_npc") makes "$complainer" mean the left player.
+func set_variable(variable_name: String, value: String) -> void:
+	_variables[variable_name] = value
+
+func has_sequence(sequence_id: String) -> bool:
+	return not _find_sequence(sequence_id).is_empty()
+
+func _resolve(id: String) -> String:
+	if id.begins_with("$"):
+		return String(_variables.get(id.substr(1), ""))
+	return id
+
 func play_sequence(sequence_id: String) -> void:
 	var sequence := _find_sequence(sequence_id)
 	if sequence.is_empty():
 		push_warning("Dialogue sequence '%s' does not exist." % sequence_id)
 		return
 	_enqueue(sequence)
+
+## Plays a sequence right now, even while another sequence is running or waiting for an event (those
+## pause before their next line until this one is done). Used for things that cannot wait, like being
+## caught cheating. The sequence only waits for events on its own silent "wait" steps.
+func play_urgent(sequence_id: String) -> void:
+	var sequence := _find_sequence(sequence_id)
+	if sequence.is_empty():
+		push_warning("Dialogue sequence '%s' does not exist." % sequence_id)
+		return
+	if _queued_or_played.has(sequence_id):
+		return
+	_queued_or_played[sequence_id] = true
+	sequence_started.emit(sequence_id)
+	_urgent_running += 1
+	_box.hide_line()
+	await _play_lines(sequence, false, true)
+	_urgent_running -= 1
+	sequence_finished.emit(sequence_id)
+	if _urgent_running == 0:
+		_urgent_finished.emit()
 
 func _find_sequence(sequence_id: String) -> Dictionary:
 	for sequence in _sequences:
@@ -169,7 +212,7 @@ func _run_queue() -> void:
 			_queue.insert(_waiting_interrupts(), rest)
 	_running = false
 
-func _play_lines(sequence: Dictionary, top_level: bool = true) -> Array:
+func _play_lines(sequence: Dictionary, top_level: bool = true, urgent: bool = false) -> Array:
 	var locks_play: bool = sequence.get("disable_play", false)
 	if locks_play:
 		_play_locks += 1
@@ -184,27 +227,35 @@ func _play_lines(sequence: Dictionary, top_level: bool = true) -> Array:
 			if nested.is_empty():
 				push_warning("Dialogue sequence '%s' does not exist." % line["play_sequence"])
 			else:
-				await _play_lines(nested, false)
+				await _play_lines(nested, false, urgent)
 		else:
-			await _play_line(line)
+			await _play_line(line, urgent)
 		if top_level and not sequence.get("interrupt", false) and _waiting_interrupts() > 0 and index < lines.size() - 1:
 			remaining = lines.slice(index + 1)
 			break
 	if locks_play:
-		await _wait_for_events()
+		if not urgent:
+			await _wait_for_events()
 		_play_locks -= 1
 		if _play_locks == 0:
 			play_lock_changed.emit(false)
 	return remaining
 
-func _play_line(line: Dictionary) -> void:
+func _play_line(line: Dictionary, urgent: bool = false) -> void:
+	# Whatever else is playing pauses before its next line while an urgent sequence runs.
+	if not urgent:
+		while _urgent_running > 0:
+			await _urgent_finished
 	if line.get("text", "") == "":
+		if urgent and line.get("wait", false) and line.has("event"):
+			await _run_event(line["event"])
+			return
 		if line.has("event"):
 			_run_event(line["event"])
-		if line.get("wait", false):
+		if line.get("wait", false) and not urgent:
 			await _wait_for_events()
 		return
-	var speaker_id := StringName(line.get("speaker", ""))
+	var speaker_id := StringName(_resolve(String(line.get("speaker", ""))))
 	var text: String = line.get("text", "")
 	var speaker: DialogueSpeaker = _speakers.get(speaker_id)
 	var stream := _load_audio(line.get("audio", ""))
@@ -222,12 +273,16 @@ func _play_line(line: Dictionary) -> void:
 		shown = "%s: %s" % [speaker.display_name, text]
 	_box.show_line(shown)
 	line_started.emit(String(speaker_id), text)
+	if line.has("look_at"):
+		look_requested.emit(speaker_id, StringName(_resolve(String(line["look_at"]))), duration, bool(line.get("look_back", true)))
 	if line.has("event"):
 		_run_event(line["event"])
 	await get_tree().create_timer(duration).timeout
-	if line.get("wait", false):
+	if line.get("wait", false) and not urgent:
 		await _wait_for_events()
-	_box.hide_line()
+	# An urgent sequence owns the subtitle box while it runs.
+	if urgent or _urgent_running == 0:
+		_box.hide_line()
 	if speaker != null:
 		speaker.set_speaking(false)
 	await get_tree().create_timer(float(line.get("pause", default_pause))).timeout
