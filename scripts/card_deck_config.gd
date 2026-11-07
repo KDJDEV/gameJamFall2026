@@ -1,8 +1,6 @@
 class_name CardDeckConfig
 extends Resource
 
-## Fill `sets` with CardSetDef resources (name, image, tint) to configure the real deck.
-## While `sets` is empty, `placeholder_set_count` numbered sets are generated instead.
 @export var sets: Array[CardSetDef] = []
 @export_range(2, 6) var cards_per_set: int = 3
 @export_range(1, 30) var placeholder_set_count: int = 10

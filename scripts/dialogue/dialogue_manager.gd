@@ -129,8 +129,7 @@ func _enqueue(sequence: Dictionary) -> void:
 	if _queued_or_played.has(sequence["id"]):
 		return
 	_queued_or_played[sequence["id"]] = true
-	# An "interrupt" sequence jumps the queue and cuts in after the current line of whatever
-	# is playing; the interrupted sequence carries on afterwards.
+
 	if sequence.get("interrupt", false):
 		_queue.insert(_waiting_interrupts(), sequence)
 	else:
@@ -162,9 +161,6 @@ func _run_queue() -> void:
 			_queue.insert(_waiting_interrupts(), rest)
 	_running = false
 
-# A line with "play_sequence": id plays that sequence in place, so shared sequences
-# (like the shuffle) can be reused by several others. Returns the lines left unplayed when
-# an interrupt sequence cut in (empty if it played to the end).
 func _play_lines(sequence: Dictionary, top_level: bool = true) -> Array:
 	var locks_play: bool = sequence.get("disable_play", false)
 	if locks_play:
@@ -187,7 +183,6 @@ func _play_lines(sequence: Dictionary, top_level: bool = true) -> Array:
 			remaining = lines.slice(index + 1)
 			break
 	if locks_play:
-		# Table actions started by the last lines (like dealing) must finish before play resumes.
 		await _wait_for_events()
 		_play_locks -= 1
 		if _play_locks == 0:
@@ -195,7 +190,6 @@ func _play_lines(sequence: Dictionary, top_level: bool = true) -> Array:
 	return remaining
 
 func _play_line(line: Dictionary) -> void:
-	# A line without text is a silent step: it only runs its event and/or waits for running ones.
 	if line.get("text", "") == "":
 		if line.has("event"):
 			_run_event(line["event"])

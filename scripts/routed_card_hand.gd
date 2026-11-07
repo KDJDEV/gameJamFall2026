@@ -12,22 +12,14 @@ signal set_completed(set_id: int, set_cards: Array)
 
 @export var auto_play: bool = false
 @export_range(0.5, 20.0) var auto_play_interval: float = 4.0
-## The player's hand draws from its pile by itself whenever it is below its full size.
 var auto_draw: bool = false
-## Start with an empty hand and wait for the dealer to deal it (see Dealer).
 @export var dealt_by_dealer: bool = false
 
-## Where the selected card stays while the rest of the hand is tucked away. The hand
-## rides on the camera, so this keeps the card above the table when the camera looks down.
 @export var held_position := Vector3(0.0, 0.05, 0.25)
-## Same, while peeking at another hand, so the held card doesn't cover their cards.
 @export var peek_held_position := Vector3(-0.3, -0.1, 0.28)
 @export_range(0.1, 1.0) var tuck_depth: float = 0.45
-## Set by the player view: the lap and waypoint offsets below are relative to this node.
 var lap_anchor: Node3D
-## Just behind the table edge, above the table top.
 @export var lap_waypoint_offset := Vector3(0.0, -0.08, -0.02)
-## Below the table, in the player's lap.
 @export var lap_offset := Vector3(0.0, -0.5, 0.15)
 @export_range(0.05, 1.0) var lap_waypoint_time: float = 0.2
 
@@ -37,18 +29,12 @@ var _held_peeking: bool = false
 var _tuck_time: float = 0.0
 var _return_time: float = 0.0
 var _returning: bool = false
-## Auto play and player input stay off until the dealer finishes dealing or reshuffling.
 var play_enabled: bool = true:
 	set(value):
 		play_enabled = value
-		# No card is shown as selected while the hand can't be played.
 		_update_selection()
-## True until the dealer has dealt the opening hands; no card is selected until then.
 var awaiting_deal: bool = false
-## Held still while the player peeks at this hand.
 var frozen: bool = false
-## Set once the final round starts. AI hands then draw and discard as normal while the pile they
-## draw from has cards, and keep discarding once it is empty, so every card goes round the table.
 var final_phase: bool = false
 var _full_hand_size: int = 5
 var _auto_timer: Timer
@@ -94,8 +80,7 @@ func _auto_play_turn() -> void:
 	if draw_in_progress or not play_enabled or frozen:
 		return
 	if final_phase:
-		# Final round: the AI plays as normal while the pile it draws from has cards, but once
-		# that pile is empty it keeps discarding, so every card goes on round the table.
+	
 		if cards.size() < _full_hand_size and not _draw_pile_is_empty():
 			draw_card()
 		elif not cards.is_empty():
@@ -111,7 +96,6 @@ func _auto_play_turn() -> void:
 	discard_selected()
 	draw_card()
 
-# Always discards a card of the type (set) the hand holds the fewest of; ties are random.
 func _choose_discard_index() -> int:
 	var counts := {}
 	for card in cards:
@@ -165,7 +149,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	super._unhandled_input(event)
 
-# Draws one card from the given pile instead of this hand's usual source.
 func deal_from(source: Node3D) -> Node3D:
 	var usual_pile := draw_pile
 	draw_pile = source
@@ -221,7 +204,6 @@ func discard_selected() -> Node3D:
 func _selection_allowed() -> bool:
 	return play_enabled and not awaiting_deal
 
-## How many cards the hand is short of a full hand.
 func cards_needed() -> int:
 	return maxi(_full_hand_size - cards.size(), 0)
 
@@ -229,7 +211,6 @@ func finish_dealing() -> void:
 	awaiting_deal = false
 	_update_selection()
 
-## Keeps only the selected card in view and tucks the rest of the hand away.
 func set_held_mode(enabled: bool, peeking: bool = false) -> void:
 	var was_held := held_mode
 	held_mode = enabled
@@ -272,8 +253,6 @@ func _layout_hand() -> void:
 		if card.has_method("set_hand_pose"):
 			card.set_hand_pose(pose, Vector3.ZERO)
 
-# Cards leave and return along an arc: first up over the table edge (the waypoint), then
-# down to the lap, so they never cut through the table top.
 func _lap_pose(offset: float) -> Vector3:
 	if lap_anchor == null:
 		return Vector3(offset * card_spacing, -tuck_depth, 0.0)
@@ -282,7 +261,6 @@ func _lap_pose(offset: float) -> Vector3:
 	var world := lap_anchor.global_position + anchor_offset + lap_anchor.global_basis.x * offset * card_spacing
 	return to_local(world)
 
-## Trades one of this hand's cards for one of another hand's cards.
 func swap_card_with(other: Node3D, my_index: int, their_index: int) -> void:
 	var mine := cards[my_index]
 	var theirs: Node3D = other.cards[their_index]

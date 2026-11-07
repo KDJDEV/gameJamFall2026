@@ -1,22 +1,14 @@
 extends Node3D
 
-## Up arrow: look at the table (only the selected card stays in view); Space there discards
-## it and returns to your hand. From the table, Left or Right leans over to peek at the
-## neighbouring player's hand: Left/Right pick one of their cards, Space swaps it with your
-## selected card, Up or Down steps back to the table view.
 enum ViewState { NORMAL, TABLE, PEEK }
 
 @export var camera: Camera3D
 @export var hand: Node3D
-## Hands you can peek at and swap with (not the dealer across the table).
 @export var left_hand: Node3D
 @export var right_hand: Node3D
 @export_range(0.0, 90.0) var look_down_degrees: float = 30.0
 @export var camera_lean_offset := Vector3(0.0, 0.0, -0.25)
 @export_range(0.1, 2.0) var transition_time: float = 0.45
-## Camera position when peeking, in the peeked hand's space: X is toward your own side of
-## it (mirrored automatically), Y up, Z toward the hand's owner. Small values keep you
-## leaning from your seat rather than standing behind them.
 @export var peek_offset := Vector3(0.45, 0.5, 0.05)
 @export_range(0.1, 2.0) var peek_transition_time: float = 0.6
 @export_range(0.0, 3.0) var peek_light_energy: float = 0.6
@@ -34,7 +26,6 @@ enum ViewState { NORMAL, TABLE, PEEK }
 @export_range(0.1, 30.0) var door_open_duration: float = 12.4
 @export_range(0.0, 5.0) var door_open_pause: float = 0.2
 @export_range(0.0, 5.0) var door_audio_lead: float = 2.5
-## Temporary test trigger; set to 0 to disable.
 @export var test_door_look_delay: float = 0.0
 
 var view_state: ViewState = ViewState.NORMAL
@@ -50,7 +41,6 @@ func _ready() -> void:
 	_camera_rest_quaternion = camera.quaternion
 	_camera_rest_position = camera.position
 	hand.lap_anchor = self
-	# A dim light so the cards can be read when leaning into the dark corners of the table.
 	_peek_light = OmniLight3D.new()
 	_peek_light.light_energy = peek_light_energy
 	_peek_light.light_color = Color(1.0, 0.85, 0.6)
@@ -64,7 +54,6 @@ func _ready() -> void:
 			get_tree().create_timer(test_door_look_delay).timeout.connect(look_at_door)
 
 func _process(_delta: float) -> void:
-	# If play gets locked (dialogue, reshuffle) while leaning, drop back to the normal view.
 	if view_state != ViewState.NORMAL and not _looking_at_door and not hand.play_enabled:
 		_end_peek()
 		_enter_normal_view()
@@ -166,7 +155,6 @@ func _start_peek(target: Node3D) -> void:
 		return
 	view_state = ViewState.PEEK
 	_peek_hand = target
-	# Their hand holds still and shows its selection while you choose a card.
 	target.frozen = true
 	target.show_selection = true
 	target.refresh_selection()
@@ -196,7 +184,6 @@ func _end_peek() -> void:
 func _discard_from_table() -> void:
 	if not hand.play_enabled or hand.draw_in_progress or hand.cards.is_empty():
 		return
-	# Leave the leaned position first so the rest of the hand comes back before the card goes.
 	_enter_normal_view()
 	hand.discard_selected()
 

@@ -10,15 +10,13 @@ signal finished
 @export_range(0.5, 20.0) var blur_duration: float = 5.0
 @export_range(0.0, 20.0) var ambience_fade_duration: float = 6.0
 @export var ambience_target_db: float = 16.0
-## The player's camera, which lifts and looks around once the eyes start to open.
+
 @export var camera: Camera3D
 @export_range(0.0, 60.0) var head_droop_degrees: float = 35.0
 @export_range(0.0, 90.0) var look_left_degrees: float = 32.0
 @export_range(0.0, 90.0) var look_right_degrees: float = 38.0
 @export_range(0.0, 60.0) var look_up_degrees: float = 22.0
-## Slows or speeds up the whole head movement (1 = as authored).
 @export_range(0.3, 3.0) var head_speed: float = 1.0
-## Size of the small continuous drift added so the head is never perfectly smooth.
 @export_range(0.0, 3.0) var head_sway_degrees: float = 0.8
 
 var is_finished: bool = false
@@ -40,7 +38,7 @@ func _ready() -> void:
 	_material.shader = preload("res://shaders/eyes_open.gdshader")
 	_material.set_shader_parameter("openness", 0.0)
 	_material.set_shader_parameter("blur", 1.0)
-	# Below the subtitles (layer 10) so the dialogue text is never blurred.
+
 	var layer := CanvasLayer.new()
 	layer.layer = 5
 	add_child(layer)
@@ -56,7 +54,7 @@ func _ready() -> void:
 	if camera != null:
 		_rest_rotation = camera.quaternion
 		_build_head_path()
-		# Head hangs forward and down while it is still dark.
+	
 		_apply_look(_path[0])
 	set_process(false)
 	_play()
@@ -78,7 +76,7 @@ func _play() -> void:
 		fade.tween_property(ambience, "volume_db", ambience_target_db, ambience_fade_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	var focus := create_tween()
 	focus.tween_method(_set_blur, 1.0, 0.0, blur_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	# Eyes crack open, flutter shut for a moment, then open fully.
+
 	var lids := create_tween().set_trans(Tween.TRANS_SINE)
 	lids.tween_method(_set_openness, 0.0, 0.3, 0.9).set_ease(Tween.EASE_OUT)
 	lids.tween_interval(0.3)
@@ -97,10 +95,6 @@ func _play() -> void:
 	is_finished = true
 	finished.emit()
 
-# One continuous path for the head, in (yaw, pitch) radians relative to the normal view:
-# it lifts out of the droop, sweeps left, back across to the right, then up at the ceiling and
-# settles. Each waypoint has a time (seconds from the previous one); points close together are
-# lingers, so the head slows there without ever stopping.
 func _build_head_path() -> void:
 	var left := look_left_degrees
 	var right := -look_right_degrees
@@ -135,7 +129,7 @@ func _process(delta: float) -> void:
 	_path_elapsed += delta * head_speed
 	var elapsed := minf(_path_elapsed, _path_total)
 	var look := _sample_path(elapsed)
-	# Sway fades out toward the end so the head lands exactly on the normal view.
+
 	var sway_weight := clampf((_path_total - elapsed) / 1.5, 0.0, 1.0) * deg_to_rad(head_sway_degrees)
 	look += Vector2(
 		sin(elapsed * 2.3) + 0.5 * sin(elapsed * 5.1 + 1.0),
@@ -148,7 +142,7 @@ func _process(delta: float) -> void:
 		camera.quaternion = _rest_rotation
 		_head_done.emit()
 
-# Catmull-Rom through the waypoints, with times so uneven spacing doesn't cause speed jumps.
+# Catmull-Rom
 func _sample_path(elapsed: float) -> Vector2:
 	var last := _path.size() - 1
 	var segment := 1
@@ -161,7 +155,6 @@ func _sample_path(elapsed: float) -> Vector2:
 	var before := _path[maxi(from_index - 1, 0)]
 	var after := _path[mini(segment + 1, last)]
 	var duration := end_time - start_time
-	# At the ends there is no neighbouring point, so mirror the segment's own length.
 	var before_time := _path_times[from_index - 1] - start_time if from_index > 0 else -duration
 	var after_time := _path_times[segment + 1] - start_time if segment < last else duration * 2.0
 	return _path[from_index].cubic_interpolate_in_time(_path[segment], before, after, weight, duration, before_time, after_time)

@@ -1,8 +1,6 @@
 class_name CardDeck
 extends Node
 
-## Owns the shuffled deck. Cards keep their set id for the whole game, so piles,
-## hands and the table always hold the same fixed set of cards.
 @export var config: CardDeckConfig
 
 var set_defs: Array[CardSetDef] = []

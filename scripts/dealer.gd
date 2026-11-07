@@ -1,36 +1,17 @@
 class_name Dealer
 extends Node
 
-## Runs the dealer's table actions. They are started by dialogue lines (the "event"
-## field in data/dialogue.json), so the dealer acts while talking:
-##   shuffle_deck      - shuffles the draw pile.
-##   deal_hands        - deals cards_per_hand cards to every hand, in `hands` order.
-##   wait_for_drain    - holds the dialogue until every pile in `wind_down_piles` has been
-##                       emptied (cards keep flowing round the table until they all end up
-##                       in `reshuffle_source`, the final pile).
-##   collect_and_deal  - shuffles the final pile into the draw pile, deals every hand back up
-##                       to a full hand and starts round two.
-##   start_final_phase - the last round: AIs draw and discard as normal, but once the pile they
-##                       draw from is empty they keep discarding, so every card goes all the way
-##                       round the table and nobody is left holding cards.
-## It also decides when the hands may play (not while dealing or shuffling, or while a
-## dialogue sequence marked "disable_play" is running).
 signal deal_finished
 signal shuffle_finished
 
 @export var dialogue_manager: DialogueManager
 @export var draw_pile: CardPile
-## The final pile: once round one ends the dealer collects it, shuffles it and deals it out.
 @export var reshuffle_source: CardPile
-## Piles that must be empty before the round-one wind-down is over (every discard pile that
-## another player draws from).
 @export var wind_down_piles: Array[CardPile] = []
-## Hands in dealing order (clockwise from the dealer's left).
 @export var hands: Array[Node3D] = []
 @export_range(1, 10) var cards_per_hand: int = 5
 @export_range(0.0, 1.0) var deal_gap: float = 0.1
 @export_range(1, 4) var shuffle_passes: int = 2
-## How long all the wind-down piles must stay empty (cards in flight don't count as empty).
 @export_range(0.5, 5.0) var drain_settle_time: float = 1.5
 
 var round_number: int = 1
@@ -79,7 +60,6 @@ func deal_hands() -> void:
 		dialogue_manager.set_draw_baseline()
 	deal_finished.emit()
 
-# Play carries on while the cards drain towards the final pile.
 func wait_for_drain() -> void:
 	_winding_down = true
 	_empty_time = 0.0
@@ -125,7 +105,6 @@ func _piles_are_empty() -> bool:
 			return false
 	return true
 
-# Deals one card at a time round the table until every hand is full or the deck runs out.
 func _top_up_hands() -> void:
 	var dealt_any := true
 	while dealt_any and draw_pile.has_cards():
@@ -144,7 +123,6 @@ func _on_play_lock_changed(locked: bool) -> void:
 	_dialogue_locked = locked
 	_apply_play_state()
 
-# Hands may only play once dealt, and not while shuffling or locked by a dialogue sequence.
 func _apply_play_state() -> void:
 	var enabled := _dealt and not _shuffling and not _dialogue_locked
 	for hand in hands:

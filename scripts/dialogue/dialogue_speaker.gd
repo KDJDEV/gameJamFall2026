@@ -1,18 +1,13 @@
 class_name DialogueSpeaker
 extends Marker3D
 
-## Place this marker above a character's head. It shows an audio icon while that
-## character speaks and plays their voice clips positionally. Lines in
-## data/dialogue.json refer to it by speaker_id. When the character is off screen
-## the icon moves to the nearest screen edge instead.
+
 @export var speaker_id: StringName = &""
 @export var display_name: String = ""
 @export var icon_texture: Texture2D = preload("res://Assets/ui/audio_icon.svg")
 @export_range(0.0001, 0.01) var icon_pixel_size: float = 0.0009
 @export var voice_volume_db: float = 0.0
-## Size of the icon (in pixels) when it is pinned to the screen edge.
 @export_range(16.0, 200.0) var edge_icon_size: float = 56.0
-## Gap between the pinned icon and the screen edge.
 @export_range(0.0, 100.0) var edge_margin: float = 24.0
 
 var _icon: Sprite3D
@@ -79,8 +74,6 @@ func set_speaking(speaking: bool) -> void:
 func _process(_delta: float) -> void:
 	_update_icon()
 
-# Shows the icon above the head while that spot is on screen, otherwise pins a flat copy of
-# it to the screen edge in the direction of the speaker.
 func _update_icon() -> void:
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
@@ -96,7 +89,6 @@ func _update_icon() -> void:
 		_icon.scale = Vector3.ONE * _pulse
 		_edge_icon.visible = false
 		return
-	# Behind the camera the projection is mirrored, so flip it and pin along that direction.
 	var pinned := point.clamp(inner.position, inner.end)
 	if behind:
 		var direction := center - point

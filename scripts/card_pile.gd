@@ -22,7 +22,6 @@ var _shuffle_sounds: Array[AudioStream] = [
 func has_cards() -> bool:
 	return not cards.is_empty()
 
-# Returns the set id of the removed card so the drawing hand keeps the same card identity.
 func consume_top_card() -> int:
 	if cards.is_empty():
 		return -1
@@ -36,7 +35,6 @@ func _ready() -> void:
 	if card_scene == null:
 		card_scene = preload("res://card.tscn")
 	if fill_from_deck:
-		# Wait until every hand has been dealt so the pile takes the remaining deck.
 		_build_visual_stack.call_deferred()
 	else:
 		_build_visual_stack()
@@ -57,8 +55,6 @@ func _build_visual_stack() -> void:
 		cards.append(card)
 	count_changed.emit(cards.size())
 
-# Piles lie flat (rotated 90° on X), which puts a card's front facing down, so the
-# card's face-up flag is the opposite of what the pile shows.
 func _set_card_in_stack(card: Node3D, index: int) -> void:
 	var stack_position := Vector3(0.0, 0.0, -index * stack_offset)
 	if card.has_method("set_static_pose"):
@@ -83,8 +79,6 @@ func _play_shuffle_sound() -> void:
 	_shuffle_audio.pitch_scale = randf_range(1.0, 1.4)
 	_shuffle_audio.play()
 
-## Riffle shuffle: the stack splits in two, then the cards drop back one by one in a
-## new random order. The cards are face down, so only their order in `cards` matters.
 func shuffle(passes: int = 2) -> void:
 	if cards.size() < 2:
 		return
@@ -117,7 +111,6 @@ func _snap_cards_to_stack() -> void:
 	for index in cards.size():
 		_set_card_in_stack(cards[index], index)
 
-## Moves every card of another pile onto the top of this one, keeping their order.
 func absorb_pile(other: CardPile) -> void:
 	var moving := other.cards.duplicate()
 	other.cards.clear()

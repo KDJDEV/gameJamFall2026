@@ -1,7 +1,6 @@
 class_name DialogueBox
 extends CanvasLayer
 
-## Subtitle-style text on a black box at the bottom centre of the screen.
 @export var font_size: int = 30
 @export_range(0.1, 1.0) var max_width_fraction: float = 0.6
 @export_range(0.0, 1.0) var fade_time: float = 0.2
@@ -49,7 +48,6 @@ func _ready() -> void:
 
 func show_line(text: String) -> void:
 	_label.text = text
-	# Shrink the box to the text, wrapping only once the line passes the maximum width.
 	var max_width := get_viewport().get_visible_rect().size.x * max_width_fraction
 	var text_width := _label.get_theme_font("font").get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	_label.custom_minimum_size.x = minf(text_width + 2.0, max_width)

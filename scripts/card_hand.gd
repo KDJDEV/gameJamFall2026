@@ -23,7 +23,6 @@ var cards: Array[Node3D] = []
 var discard_pile: Array[Node3D] = []
 var selected_index: int = 0
 var draw_count: int = 0
-# Each hand floats as a whole, but with its own timing so the players' hands never move in step.
 var _bob_time: float = randf() * 100.0
 var _bob_phases := Vector3(randf() * TAU, randf() * TAU, randf() * TAU)
 var _bob_rate: float = randf_range(0.75, 1.3)
@@ -76,7 +75,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func move_selection(direction: int) -> void:
 	_move_selection(direction)
 
-## Turns the hand so its cards face a point in the world (they stay readable from the side).
 func face_toward(world_point: Vector3) -> void:
 	if not _facing_saved:
 		_saved_yaw = _rest_rotation.y
