@@ -346,11 +346,12 @@ script = ExtResource("28_8pgb7")
 speaker_id = &"right_npc"
 display_name = "Right NPC"
 
-[node name="Dealer" type="Node" parent="." unique_id=1610744365 node_paths=PackedStringArray("dialogue_manager", "draw_pile", "reshuffle_source", "hands")]
+[node name="Dealer" type="Node" parent="." unique_id=1610744365 node_paths=PackedStringArray("dialogue_manager", "draw_pile", "reshuffle_source", "wind_down_piles", "hands")]
 script = ExtResource("29_8pgb7")
 dialogue_manager = NodePath("../DialogueManager")
 draw_pile = NodePath("../DealerDrawPile")
 reshuffle_source = NodePath("../LeftNpcDiscardPile")
+wind_down_piles = [NodePath("../DealerDiscardPile"), NodePath("../RightNpcDiscardPile"), NodePath("../PlayerDiscardPile")]
 hands = [NodePath("../RightNpcHand"), NodePath("../Player/Camera3D/CardHand"), NodePath("../LeftNpcHand"), NodePath("../DealerHand")]
 
 [node name="IntroSequence" type="Node" parent="." unique_id=1385669204 node_paths=PackedStringArray("ambience", "camera")]

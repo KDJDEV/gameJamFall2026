@@ -38,9 +38,17 @@ var _tuck_time: float = 0.0
 var _return_time: float = 0.0
 var _returning: bool = false
 ## Auto play and player input stay off until the dealer finishes dealing or reshuffling.
-var play_enabled: bool = true
+var play_enabled: bool = true:
+	set(value):
+		play_enabled = value
+		# No card is shown as selected while the hand can't be played.
+		_update_selection()
 ## True until the dealer has dealt the opening hands; no card is selected until then.
 var awaiting_deal: bool = false
+## Held still while the player peeks at this hand.
+var frozen: bool = false
+## Set once the final round starts: no more drawing, the hand just gets emptied.
+var final_phase: bool = false
 var _full_hand_size: int = 5
 var _auto_timer: Timer
 var initializing: bool = true
@@ -82,7 +90,13 @@ func _ready() -> void:
 
 func _auto_play_turn() -> void:
 	_auto_timer.wait_time = auto_play_interval * randf_range(0.8, 1.2)
-	if draw_in_progress or not play_enabled:
+	if draw_in_progress or not play_enabled or frozen:
+		return
+	if final_phase:
+		# After the last card the AI only gets rid of what is left in its hand.
+		if not cards.is_empty():
+			selected_index = _choose_discard_index()
+			discard_selected()
 		return
 	if cards.size() < _full_hand_size:
 		draw_card()
@@ -91,20 +105,18 @@ func _auto_play_turn() -> void:
 	discard_selected()
 	draw_card()
 
-# Discards from the sets the hand is furthest from completing.
+# Always discards a card of the type (set) the hand holds the fewest of; ties are random.
 func _choose_discard_index() -> int:
 	var counts := {}
 	for card in cards:
-		var set_id = card.get("set_id")
+		var set_id: int = card.get("set_id")
 		counts[set_id] = counts.get(set_id, 0) + 1
+	var fewest: int = cards.size() + 1
+	for set_id in counts:
+		fewest = mini(fewest, counts[set_id])
 	var candidates: Array[int] = []
-	var lowest := 9999
 	for index in cards.size():
-		var count: int = counts[cards[index].get("set_id")]
-		if count < lowest:
-			lowest = count
-			candidates = [index]
-		elif count == lowest:
+		if counts[cards[index].get("set_id")] == fewest:
 			candidates.append(index)
 	return candidates.pick_random()
 
@@ -201,7 +213,11 @@ func discard_selected() -> Node3D:
 	return card
 
 func _selection_allowed() -> bool:
-	return not awaiting_deal
+	return play_enabled and not awaiting_deal
+
+## How many cards the hand is short of a full hand.
+func cards_needed() -> int:
+	return maxi(_full_hand_size - cards.size(), 0)
 
 func finish_dealing() -> void:
 	awaiting_deal = false
@@ -222,7 +238,7 @@ func set_held_mode(enabled: bool, peeking: bool = false) -> void:
 
 func _process(delta: float) -> void:
 	super._process(delta)
-	if auto_draw and play_enabled and not held_mode and not _returning and not draw_in_progress \
+	if auto_draw and play_enabled and not final_phase and not held_mode and not _returning and not draw_in_progress \
 			and cards.size() < _full_hand_size and not _draw_pile_is_empty():
 		draw_card()
 	if held_mode:

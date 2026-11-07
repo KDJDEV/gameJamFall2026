@@ -7,12 +7,16 @@
 		"Line fields: speaker (a DialogueSpeaker speaker_id, or 'player' for internal thoughts), text, and optionally",
 		"audio (res:// path to a clip; it plays from the speaker and sets the line length), delay (seconds before the line),",
 		"duration (override the line length), pause (seconds after the line). Without audio the length is estimated from the text.",
-		"event (runs a table action when the line starts: 'shuffle_deck' or 'deal_hands'); add \"wait\": true to hold the line until it finishes."
+		"event (runs a table action when the line starts: 'shuffle_deck', 'deal_hands', 'wait_for_drain', 'collect_and_deal' or 'start_final_phase'); add \"wait\": true to hold the line until it finishes.",
+		"A line with no text is a silent step: { \"event\": \"wait_for_drain\", \"wait\": true } runs the action and waits for it; { \"wait\": true } just waits for any action still running.",
+		"Sequence options: \"disable_play\": true stops all players (including you) from playing cards while that sequence runs. \"interrupt\": true makes it start right after the current line of whatever is playing (which then resumes).",
+		"Trigger option: \"round\": 1 or 2 only lets a cards_left trigger fire in that round (round 2 starts once the dealer has collected the final pile and dealt everyone back up to five)."
 	],
 	"sequences": [
 		{
 			"id": "intro",
 			"trigger": { "type": "start", "delay": 2.0 },
+			"disable_play": true,
 			"lines": [
 				{ "speaker": "dealer", "text": "Well, I guess I start since I'm the dealer." },
 				{ "speaker": "left_npc", "text": "Why did they choose you to be the dealer anyway?" },
@@ -36,13 +40,28 @@
 		},
 		{
 			"id": "round_two",
-			"trigger": { "type": "cards_left", "value": 0 },
+			"trigger": { "type": "cards_left", "value": 0, "round": 1 },
+			"interrupt": true,
 			"lines": [
-				{ "speaker": "dealer", "text": "That's the last of the deck." },
-				{ "speaker": "left_npc", "text": "Already? That went fast." },
-				{ "play_sequence": "shuffle" },
-				{ "speaker": "dealer", "text": "Remember, I only reshuffle once. After this, it's over." },
+				{ "speaker": "dealer", "text": "The first round must come to an end. Everybody make sure your discard pile is empty." },
+				{ "speaker": "dealer", "text": "Then we wait until every card has made it to the final pile: the left's discard." },
+				{ "speaker": "player", "text": "So I keep discarding until every pile runs dry." },
+				{ "event": "wait_for_drain", "wait": true },
+				{ "speaker": "dealer", "text": "That's all of them. I'll collect the final pile, shuffle it, and deal everyone back up to five.", "event": "collect_and_deal" },
+				{ "wait": true },
+				{ "speaker": "dealer", "text": "Round two. This deck is the last one, so make it count." },
 				{ "speaker": "player", "text": "Last chance. Whoever has the most sets walks out of here." }
+			]
+		},
+		{
+			"id": "final_round",
+			"trigger": { "type": "cards_left", "value": 0, "round": 2 },
+			"interrupt": true,
+			"lines": [
+				{ "speaker": "dealer", "text": "That's the last card. Make your final sets, then discard whatever you have left.", "event": "start_final_phase" },
+				{ "speaker": "right_npc", "text": "And then what happens?" },
+				{ "speaker": "dealer", "text": "Nobody told me that part." },
+				{ "speaker": "player", "text": "Nobody told any of us that part." }
 			]
 		},
 		{

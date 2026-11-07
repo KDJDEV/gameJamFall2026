@@ -8,6 +8,8 @@ signal sequence_started(sequence_id: String)
 signal sequence_finished(sequence_id: String)
 signal line_started(speaker_id: String, text: String)
 signal event_finished(event_name: String)
+## Emitted when a sequence marked "disable_play" starts (true) and when the last one ends (false).
+signal play_lock_changed(locked: bool)
 
 @export_file("*.json") var dialogue_file: String = "res://data/dialogue.json"
 ## The deck whose remaining cards drive the cards_left / cards_drawn triggers.
@@ -31,6 +33,8 @@ var _speakers: Dictionary = {}
 var _fallback_voice: AudioStreamPlayer
 var _event_handlers: Dictionary = {}
 var _events_running: int = 0
+var _play_locks: int = 0
+var _round: int = 1
 
 func _ready() -> void:
 	_box = DialogueBox.new()
@@ -74,6 +78,12 @@ func set_draw_baseline() -> void:
 	_baseline_ready = true
 	_on_pile_count_changed(_starting_cards)
 
+## Tells the manager which round the game is in; triggers with a "round" field only fire in it.
+## Triggers are only checked when the deck count changes, so a deck that is already empty when
+## a round begins does not fire a cards_left trigger by itself.
+func set_round(round_number: int) -> void:
+	_round = round_number
+
 func play_sequence(sequence_id: String) -> void:
 	var sequence := _find_sequence(sequence_id)
 	if sequence.is_empty():
@@ -105,6 +115,9 @@ func _load_sequences() -> void:
 func _on_pile_count_changed(count: int) -> void:
 	for sequence in _sequences:
 		var trigger: Dictionary = sequence.get("trigger", {})
+		var wanted_round := int(trigger.get("round", 0))
+		if wanted_round != 0 and wanted_round != _round:
+			continue
 		var type: String = trigger.get("type", "")
 		var value := int(trigger.get("value", 0))
 		if type == "cards_left" and count <= value:
@@ -116,34 +129,79 @@ func _enqueue(sequence: Dictionary) -> void:
 	if _queued_or_played.has(sequence["id"]):
 		return
 	_queued_or_played[sequence["id"]] = true
-	_queue.append(sequence)
+	# An "interrupt" sequence jumps the queue and cuts in after the current line of whatever
+	# is playing; the interrupted sequence carries on afterwards.
+	if sequence.get("interrupt", false):
+		_queue.insert(_waiting_interrupts(), sequence)
+	else:
+		_queue.append(sequence)
 	if not _running:
 		_run_queue()
+
+func _waiting_interrupts() -> int:
+	var count := 0
+	for queued in _queue:
+		if queued.get("interrupt", false):
+			count += 1
+	return count
 
 func _run_queue() -> void:
 	_running = true
 	while not _queue.is_empty():
 		var sequence: Dictionary = _queue.pop_front()
-		sequence_started.emit(sequence["id"])
-		await _play_lines(sequence)
+		if not sequence.get("resumed", false):
+			sequence_started.emit(sequence["id"])
+		var remaining: Array = await _play_lines(sequence)
 		await _wait_for_events()
-		sequence_finished.emit(sequence["id"])
+		if remaining.is_empty():
+			sequence_finished.emit(sequence["id"])
+		else:
+			var rest := sequence.duplicate()
+			rest["lines"] = remaining
+			rest["resumed"] = true
+			_queue.insert(_waiting_interrupts(), rest)
 	_running = false
 
 # A line with "play_sequence": id plays that sequence in place, so shared sequences
-# (like the shuffle) can be reused by several others.
-func _play_lines(sequence: Dictionary) -> void:
-	for line in sequence["lines"]:
+# (like the shuffle) can be reused by several others. Returns the lines left unplayed when
+# an interrupt sequence cut in (empty if it played to the end).
+func _play_lines(sequence: Dictionary, top_level: bool = true) -> Array:
+	var locks_play: bool = sequence.get("disable_play", false)
+	if locks_play:
+		_play_locks += 1
+		if _play_locks == 1:
+			play_lock_changed.emit(true)
+	var lines: Array = sequence["lines"]
+	var remaining: Array = []
+	for index in lines.size():
+		var line: Dictionary = lines[index]
 		if line.has("play_sequence"):
 			var nested := _find_sequence(line["play_sequence"])
 			if nested.is_empty():
 				push_warning("Dialogue sequence '%s' does not exist." % line["play_sequence"])
 			else:
-				await _play_lines(nested)
+				await _play_lines(nested, false)
 		else:
 			await _play_line(line)
+		if top_level and not sequence.get("interrupt", false) and _waiting_interrupts() > 0 and index < lines.size() - 1:
+			remaining = lines.slice(index + 1)
+			break
+	if locks_play:
+		# Table actions started by the last lines (like dealing) must finish before play resumes.
+		await _wait_for_events()
+		_play_locks -= 1
+		if _play_locks == 0:
+			play_lock_changed.emit(false)
+	return remaining
 
 func _play_line(line: Dictionary) -> void:
+	# A line without text is a silent step: it only runs its event and/or waits for running ones.
+	if line.get("text", "") == "":
+		if line.has("event"):
+			_run_event(line["event"])
+		if line.get("wait", false):
+			await _wait_for_events()
+		return
 	var speaker_id := StringName(line.get("speaker", ""))
 	var text: String = line.get("text", "")
 	var speaker: DialogueSpeaker = _speakers.get(speaker_id)

@@ -43,7 +43,6 @@ var _camera_rest_quaternion: Quaternion
 var _camera_rest_position: Vector3
 var _tween: Tween
 var _peek_hand: Node3D
-var _peek_hand_was_playing: bool = true
 var _peek_light: OmniLight3D
 var _light_tween: Tween
 
@@ -64,8 +63,14 @@ func _ready() -> void:
 		else:
 			get_tree().create_timer(test_door_look_delay).timeout.connect(look_at_door)
 
+func _process(_delta: float) -> void:
+	# If play gets locked (dialogue, reshuffle) while leaning, drop back to the normal view.
+	if view_state != ViewState.NORMAL and not _looking_at_door and not hand.play_enabled:
+		_end_peek()
+		_enter_normal_view()
+
 func _unhandled_input(event: InputEvent) -> void:
-	if _looking_at_door or hand.awaiting_deal:
+	if _looking_at_door or not hand.play_enabled:
 		return
 	if not event is InputEventKey:
 		return
@@ -162,8 +167,7 @@ func _start_peek(target: Node3D) -> void:
 	view_state = ViewState.PEEK
 	_peek_hand = target
 	# Their hand holds still and shows its selection while you choose a card.
-	_peek_hand_was_playing = target.play_enabled
-	target.play_enabled = false
+	target.frozen = true
 	target.show_selection = true
 	target.refresh_selection()
 	hand.set_held_mode(true, true)
@@ -186,7 +190,7 @@ func _end_peek() -> void:
 	_peek_hand.restore_facing()
 	_peek_hand.show_selection = false
 	_peek_hand.refresh_selection()
-	_peek_hand.play_enabled = _peek_hand_was_playing
+	_peek_hand.frozen = false
 	_peek_hand = null
 
 func _discard_from_table() -> void:
