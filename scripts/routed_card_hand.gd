@@ -37,6 +37,8 @@ var awaiting_deal: bool = false
 var frozen: bool = false
 var final_phase: bool = false
 var _full_hand_size: int = 5
+## Keeps the selection scrolling while the joystick is held left or right.
+var _hold_repeat := HoldRepeat.new()
 var _auto_timer: Timer
 var initializing: bool = true
 var card_audio: AudioStreamPlayer
@@ -223,8 +225,18 @@ func set_held_mode(enabled: bool, peeking: bool = false) -> void:
 		_returning = lap_anchor != null
 	_layout_hand()
 
+func _repeat_selection(delta: float) -> void:
+	# Same conditions as the key presses in _unhandled_input.
+	if not controllable or not play_enabled or held_mode or awaiting_deal:
+		_hold_repeat.reset()
+		return
+	var direction := _hold_repeat.step(delta)
+	if direction != 0:
+		_move_selection(direction)
+
 func _process(delta: float) -> void:
 	super._process(delta)
+	_repeat_selection(delta)
 	if auto_draw and play_enabled and not held_mode and not _returning and not draw_in_progress \
 			and cards.size() < _full_hand_size and not _draw_pile_is_empty():
 		draw_card()

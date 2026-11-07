@@ -192,7 +192,7 @@ draw_duration = 0.25
 dealt_by_dealer = true
 hand_limit = 8
 card_spacing = 0.068
-fan_height = 0.028
+fan_height = 0.014
 fan_rotation = 0.09
 
 [node name="TestLight" type="OmniLight3D" parent="." unique_id=1881773175]
@@ -230,7 +230,7 @@ auto_play = true
 dealt_by_dealer = true
 hand_limit = 8
 card_spacing = 0.068
-fan_height = 0.028
+fan_height = 0.014
 fan_rotation = 0.09
 show_selection = false
 
@@ -265,7 +265,7 @@ auto_play = true
 dealt_by_dealer = true
 hand_limit = 8
 card_spacing = 0.068
-fan_height = 0.028
+fan_height = 0.014
 fan_rotation = 0.09
 show_selection = false
 
@@ -281,7 +281,7 @@ auto_play = true
 dealt_by_dealer = true
 hand_limit = 8
 card_spacing = 0.068
-fan_height = 0.028
+fan_height = 0.014
 fan_rotation = 0.09
 show_selection = false
 
@@ -292,18 +292,34 @@ config = ExtResource("18_3dlgs")
 [node name="DealerSetArea" type="Node3D" parent="." unique_id=975052297]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.74, 0.8345, 4.52)
 script = ExtResource("19_vte5o")
+table_min = Vector2(2.2535, 4.41)
+table_max = Vector2(3.2335, 5.39)
+obstacle_center = Vector2(2.744, 4.824)
+obstacle_radius = 0.095
 
 [node name="PlayerSetArea" type="Node3D" parent="." unique_id=375904462]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.74, 0.8345, 5.13)
 script = ExtResource("19_vte5o")
+table_min = Vector2(2.2535, 4.41)
+table_max = Vector2(3.2335, 5.39)
+obstacle_center = Vector2(2.744, 4.824)
+obstacle_radius = 0.095
 
 [node name="RightNpcSetArea" type="Node3D" parent="." unique_id=718683541]
 transform = Transform3D(0.25881907, 0, 0.9659258, 0, 1, 0, -0.9659258, 0, 0.25881907, 3.04, 0.8345, 4.9)
 script = ExtResource("19_vte5o")
+table_min = Vector2(2.2535, 4.41)
+table_max = Vector2(3.2335, 5.39)
+obstacle_center = Vector2(2.744, 4.824)
+obstacle_radius = 0.095
 
 [node name="LeftNpcSetArea" type="Node3D" parent="." unique_id=1881048246]
 transform = Transform3D(0.25881907, 0, -0.9659258, 0, 1, 0, 0.9659258, 0, 0.25881907, 2.44, 0.8345, 4.9)
 script = ExtResource("19_vte5o")
+table_min = Vector2(2.2535, 4.41)
+table_max = Vector2(3.2335, 5.39)
+obstacle_center = Vector2(2.744, 4.824)
+obstacle_radius = 0.095
 
 [node name="AmbienceAudio" type="AudioStreamPlayer" parent="." unique_id=333435411]
 stream = ExtResource("21_ambience")

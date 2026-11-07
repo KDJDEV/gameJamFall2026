@@ -1,5 +1,11 @@
 extends Node3D
 
+## Controls use the move_up / move_down / move_left / move_right / select input actions
+## (Project Settings > Input Map), bound to every joystick and button key of the arcade cabinet.
+## Up: look at the table (only the selected card stays in view); select there discards it and
+## returns to your hand. From the table, left or right leans over to peek at the neighbouring
+## player's hand: left/right pick one of their cards, select swaps it with your selected card,
+## up or down steps back to the table view.
 enum ViewState { NORMAL, TABLE, PEEK }
 
 @export var camera: Camera3D
@@ -35,6 +41,7 @@ var _camera_rest_position: Vector3
 var _tween: Tween
 var _peek_hand: Node3D
 var _peek_light: OmniLight3D
+var _hold_repeat := HoldRepeat.new()
 var _light_tween: Tween
 
 func _ready() -> void:
@@ -53,51 +60,51 @@ func _ready() -> void:
 		else:
 			get_tree().create_timer(test_door_look_delay).timeout.connect(look_at_door)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if view_state != ViewState.NORMAL and not _looking_at_door and not hand.play_enabled:
 		_end_peek()
 		_enter_normal_view()
+	# Holding the joystick keeps scrolling through the peeked hand's cards.
+	if view_state == ViewState.PEEK and _peek_hand != null and hand.play_enabled and not _looking_at_door:
+		var direction := _hold_repeat.step(delta)
+		if direction != 0:
+			_peek_hand.move_selection(direction)
+	else:
+		_hold_repeat.reset()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _looking_at_door or not hand.play_enabled:
 		return
-	if not event is InputEventKey:
-		return
-	var key_event := event as InputEventKey
-	if not key_event.pressed or key_event.echo:
-		return
 	var handled := true
 	match view_state:
 		ViewState.NORMAL:
-			if key_event.keycode == KEY_UP:
+			if event.is_action_pressed("move_up"):
 				_enter_table_view()
 			else:
 				handled = false
 		ViewState.TABLE:
-			match key_event.keycode:
-				KEY_DOWN:
-					_enter_normal_view()
-				KEY_SPACE:
-					_discard_from_table()
-				KEY_LEFT:
-					_start_peek(left_hand)
-				KEY_RIGHT:
-					_start_peek(right_hand)
-				_:
-					handled = false
+			if event.is_action_pressed("move_down"):
+				_enter_normal_view()
+			elif event.is_action_pressed("select"):
+				_discard_from_table()
+			elif event.is_action_pressed("move_left"):
+				_start_peek(left_hand)
+			elif event.is_action_pressed("move_right"):
+				_start_peek(right_hand)
+			else:
+				handled = false
 		ViewState.PEEK:
-			match key_event.keycode:
-				KEY_LEFT:
-					_peek_hand.move_selection(-1)
-				KEY_RIGHT:
-					_peek_hand.move_selection(1)
-				KEY_DOWN, KEY_UP:
-					_end_peek()
-					_enter_table_view()
-				KEY_SPACE:
-					_swap_with_peeked_hand()
-				_:
-					handled = false
+			if event.is_action_pressed("move_left"):
+				_peek_hand.move_selection(-1)
+			elif event.is_action_pressed("move_right"):
+				_peek_hand.move_selection(1)
+			elif event.is_action_pressed("move_down") or event.is_action_pressed("move_up"):
+				_end_peek()
+				_enter_table_view()
+			elif event.is_action_pressed("select"):
+				_swap_with_peeked_hand()
+			else:
+				handled = false
 	if handled:
 		get_viewport().set_input_as_handled()
 

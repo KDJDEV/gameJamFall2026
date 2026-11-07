@@ -11,6 +11,9 @@ signal card_discarded(card: Node3D)
 @export_range(0.0, 1.5) var fan_width: float = 0.9
 @export_range(0.0, 0.5) var fan_height: float = 0.06
 @export_range(0.0, 0.6) var fan_rotation: float = 0.12
+## Depth between neighbouring cards (toward the viewer, later cards on top) so overlapping
+## cards never sit in the same plane and flicker (z-fight).
+@export_range(0.0, 0.02) var card_depth_step: float = 0.003
 @export var starting_hand_size: int = 5
 @export_range(0.0, 0.1) var bob_height: float = 0.012
 @export_range(0.0, 0.1) var bob_sway: float = 0.008
@@ -58,19 +61,15 @@ func _process(delta: float) -> void:
 	position = position.lerp(target_position, weight)
 	rotation = rotation.lerp(target_rotation, weight)
 
+## Left/right move the selection and select discards it (move_left / move_right / select
+## input actions, bound to every joystick and button key of the arcade cabinet).
 func _unhandled_input(event: InputEvent) -> void:
-	if not event is InputEventKey:
-		return
-	var key_event := event as InputEventKey
-	if not key_event.pressed or key_event.echo:
-		return
-	match key_event.keycode:
-		KEY_LEFT:
-			_move_selection(-1)
-		KEY_RIGHT:
-			_move_selection(1)
-		KEY_SPACE:
-			discard_selected()
+	if event.is_action_pressed("move_left"):
+		_move_selection(-1)
+	elif event.is_action_pressed("move_right"):
+		_move_selection(1)
+	elif event.is_action_pressed("select"):
+		discard_selected()
 
 func move_selection(direction: int) -> void:
 	_move_selection(direction)
@@ -145,7 +144,7 @@ func _layout_hand() -> void:
 	for index in count:
 		var card := cards[index]
 		var offset := float(index) - center
-		var card_position := Vector3(offset * card_spacing, -abs(offset) * fan_height, abs(offset) * 0.025)
+		var card_position := Vector3(offset * card_spacing, -abs(offset) * fan_height, abs(offset) * 0.025 + index * card_depth_step)
 		var card_rotation := Vector3(0.0, 0.0, -offset * fan_rotation)
 		if card.has_method("set_hand_pose"):
 			card.set_hand_pose(card_position, card_rotation)
