@@ -77,7 +77,7 @@ func _stack_position(index: int) -> Vector3:
 func _play_shuffle_sound() -> void:
 	if _shuffle_audio == null:
 		_shuffle_audio = AudioStreamPlayer3D.new()
-		_shuffle_audio.volume_db = -8.0
+		_shuffle_audio.volume_db = 0.0
 		add_child(_shuffle_audio)
 	_shuffle_audio.stream = _shuffle_sounds.pick_random()
 	_shuffle_audio.pitch_scale = randf_range(1.0, 1.4)

@@ -52,7 +52,15 @@ func _ready() -> void:
 	for sequence in _sequences:
 		var trigger: Dictionary = sequence.get("trigger", {})
 		if trigger.get("type", "") == "start":
-			get_tree().create_timer(float(trigger.get("delay", 0.0))).timeout.connect(play_sequence.bind(sequence["id"]))
+			_start_after_intro(sequence["id"], float(trigger.get("delay", 0.0)))
+
+# Start triggers wait for the opening (the screen fading in) to finish before their own delay.
+func _start_after_intro(sequence_id: String, delay: float) -> void:
+	var intro := get_tree().get_first_node_in_group("intro_sequence") as IntroSequence
+	if intro != null and not intro.is_finished:
+		await intro.finished
+	await get_tree().create_timer(delay).timeout
+	play_sequence(sequence_id)
 
 ## Lets a dialogue line run game code: a line with "event": name calls this handler
 ## (a callable that may await). With "wait": true the line holds until it finishes.

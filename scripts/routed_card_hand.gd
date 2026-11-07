@@ -6,18 +6,41 @@ signal set_completed(set_id: int, set_cards: Array)
 @export var discard_target: Node3D
 @export var set_area: TableSetArea
 @export var controllable: bool = true
-@export_range(-40.0, 6.0) var audio_volume_db: float = -2.0
+@export_range(-40.0, 12.0) var audio_volume_db: float = 6.0
 @export_range(0.1, 2.0) var draw_duration: float = 0.55
 @export_range(0.0, 0.5) var draw_arc_height: float = 0.12
 
 @export var auto_play: bool = false
 @export_range(0.5, 20.0) var auto_play_interval: float = 4.0
+## The player's hand draws from its pile by itself whenever it is below its full size.
+var auto_draw: bool = false
 ## Start with an empty hand and wait for the dealer to deal it (see Dealer).
 @export var dealt_by_dealer: bool = false
 
+## Where the selected card stays while the rest of the hand is tucked away. The hand
+## rides on the camera, so this keeps the card above the table when the camera looks down.
+@export var held_position := Vector3(0.0, 0.05, 0.25)
+## Same, while peeking at another hand, so the held card doesn't cover their cards.
+@export var peek_held_position := Vector3(-0.3, -0.1, 0.28)
+@export_range(0.1, 1.0) var tuck_depth: float = 0.45
+## Set by the player view: the lap and waypoint offsets below are relative to this node.
+var lap_anchor: Node3D
+## Just behind the table edge, above the table top.
+@export var lap_waypoint_offset := Vector3(0.0, -0.08, -0.02)
+## Below the table, in the player's lap.
+@export var lap_offset := Vector3(0.0, -0.5, 0.15)
+@export_range(0.05, 1.0) var lap_waypoint_time: float = 0.2
+
 var draw_in_progress: bool = false
+var held_mode: bool = false
+var _held_peeking: bool = false
+var _tuck_time: float = 0.0
+var _return_time: float = 0.0
+var _returning: bool = false
 ## Auto play and player input stay off until the dealer finishes dealing or reshuffling.
 var play_enabled: bool = true
+## True until the dealer has dealt the opening hands; no card is selected until then.
+var awaiting_deal: bool = false
 var _full_hand_size: int = 5
 var _auto_timer: Timer
 var initializing: bool = true
@@ -31,6 +54,10 @@ var discard_sounds: Array[AudioStream] = [
 	preload("res://Assets/audio/cardDiscard2.mp3"),
 	preload("res://Assets/audio/cardDiscard3.mp3")
 ]
+var swap_sounds: Array[AudioStream] = [
+	preload("res://Assets/audio/swap1.mp3"),
+	preload("res://Assets/audio/swap2.mp3")
+]
 
 func _ready() -> void:
 	card_audio = AudioStreamPlayer.new()
@@ -38,9 +65,11 @@ func _ready() -> void:
 	card_audio.volume_db = audio_volume_db
 	add_child(card_audio)
 	_full_hand_size = starting_hand_size
+	auto_draw = controllable
 	if dealt_by_dealer:
 		starting_hand_size = 0
 		play_enabled = false
+		awaiting_deal = true
 	super._ready()
 	initializing = false
 	_check_for_sets.call_deferred()
@@ -170,6 +199,84 @@ func discard_selected() -> Node3D:
 	_play_card_sound(discard_sounds)
 	card_discarded.emit(card)
 	return card
+
+func _selection_allowed() -> bool:
+	return not awaiting_deal
+
+func finish_dealing() -> void:
+	awaiting_deal = false
+	_update_selection()
+
+## Keeps only the selected card in view and tucks the rest of the hand away.
+func set_held_mode(enabled: bool, peeking: bool = false) -> void:
+	var was_held := held_mode
+	held_mode = enabled
+	_held_peeking = peeking
+	if enabled and not was_held:
+		_tuck_time = 0.0
+		_returning = false
+	elif not enabled and was_held:
+		_return_time = 0.0
+		_returning = lap_anchor != null
+	_layout_hand()
+
+func _process(delta: float) -> void:
+	super._process(delta)
+	if auto_draw and play_enabled and not held_mode and not _returning and not draw_in_progress \
+			and cards.size() < _full_hand_size and not _draw_pile_is_empty():
+		draw_card()
+	if held_mode:
+		_tuck_time += delta
+		_layout_hand()
+	elif _returning:
+		_return_time += delta
+		_returning = _return_time < lap_waypoint_time
+		_layout_hand()
+
+func _layout_hand() -> void:
+	if not held_mode and not _returning:
+		super._layout_hand()
+		return
+	var center := (cards.size() - 1) * 0.5
+	for index in cards.size():
+		var card := cards[index]
+		var is_held_card := index == selected_index
+		var pose := peek_held_position if _held_peeking else held_position
+		if not is_held_card:
+			pose = _lap_pose(float(index) - center)
+			card.visible = _returning or _tuck_time < lap_waypoint_time + 0.4
+		else:
+			card.visible = true
+		if card.has_method("set_hand_pose"):
+			card.set_hand_pose(pose, Vector3.ZERO)
+
+# Cards leave and return along an arc: first up over the table edge (the waypoint), then
+# down to the lap, so they never cut through the table top.
+func _lap_pose(offset: float) -> Vector3:
+	if lap_anchor == null:
+		return Vector3(offset * card_spacing, -tuck_depth, 0.0)
+	var at_waypoint := _returning or _tuck_time < lap_waypoint_time
+	var anchor_offset := lap_waypoint_offset if at_waypoint else lap_offset
+	var world := lap_anchor.global_position + anchor_offset + lap_anchor.global_basis.x * offset * card_spacing
+	return to_local(world)
+
+## Trades one of this hand's cards for one of another hand's cards.
+func swap_card_with(other: Node3D, my_index: int, their_index: int) -> void:
+	var mine := cards[my_index]
+	var theirs: Node3D = other.cards[their_index]
+	cards[my_index] = theirs
+	other.cards[their_index] = mine
+	theirs.reparent(self, true)
+	mine.reparent(other, true)
+	mine.visible = true
+	theirs.visible = true
+	_update_selection()
+	other._update_selection()
+	_layout_hand()
+	other._layout_hand()
+	_play_card_sound(swap_sounds)
+	_check_for_sets.call_deferred()
+	other._check_for_sets.call_deferred()
 
 func _set_draw_rotation(weight: float, card: Node3D, start_basis: Basis, target_basis: Basis) -> void:
 	var card_transform: Transform3D = card.global_transform

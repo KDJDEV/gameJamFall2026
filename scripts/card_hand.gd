@@ -23,9 +23,14 @@ var cards: Array[Node3D] = []
 var discard_pile: Array[Node3D] = []
 var selected_index: int = 0
 var draw_count: int = 0
-var _bob_time: float = 0.0
+# Each hand floats as a whole, but with its own timing so the players' hands never move in step.
+var _bob_time: float = randf() * 100.0
+var _bob_phases := Vector3(randf() * TAU, randf() * TAU, randf() * TAU)
+var _bob_rate: float = randf_range(0.75, 1.3)
 var _rest_position := Vector3.ZERO
 var _rest_rotation := Vector3.ZERO
+var _facing_saved: bool = false
+var _saved_yaw: float = 0.0
 
 func _ready() -> void:
 	_rest_position = position
@@ -38,17 +43,17 @@ func _ready() -> void:
 	_layout_hand()
 
 func _process(delta: float) -> void:
-	_bob_time += delta * bob_speed
+	_bob_time += delta * bob_speed * _bob_rate
 	var bob_offset := Vector3(
-		sin(_bob_time * 1.1) * bob_sway,
-		sin(_bob_time * 0.8 + 0.7) * bob_height,
-		cos(_bob_time * 0.9) * bob_sway * 0.35
+		sin(_bob_time * 1.1 + _bob_phases.x) * bob_sway,
+		sin(_bob_time * 0.8 + _bob_phases.y) * bob_height,
+		cos(_bob_time * 0.9 + _bob_phases.z) * bob_sway * 0.35
 	)
 	var target_position := _rest_position + bob_offset
 	var target_rotation := _rest_rotation + Vector3(
-		sin(_bob_time * 0.7) * bob_sway * 0.5,
-		sin(_bob_time * 0.6 + 0.4) * bob_sway * 0.5,
-		sin(_bob_time * 0.5) * bob_sway * 0.25
+		sin(_bob_time * 0.7 + _bob_phases.y) * bob_sway * 0.5,
+		sin(_bob_time * 0.6 + _bob_phases.z) * bob_sway * 0.5,
+		sin(_bob_time * 0.5 + _bob_phases.x) * bob_sway * 0.25
 	)
 	var weight := 1.0 - exp(-bob_smoothing * delta)
 	position = position.lerp(target_position, weight)
@@ -67,9 +72,25 @@ func _unhandled_input(event: InputEvent) -> void:
 			_move_selection(1)
 		KEY_SPACE:
 			discard_selected()
-		KEY_CTRL:
-			if key_event.location == KEY_LOCATION_RIGHT:
-				draw_card()
+
+func move_selection(direction: int) -> void:
+	_move_selection(direction)
+
+## Turns the hand so its cards face a point in the world (they stay readable from the side).
+func face_toward(world_point: Vector3) -> void:
+	if not _facing_saved:
+		_saved_yaw = _rest_rotation.y
+		_facing_saved = true
+	var direction := world_point - global_position
+	_rest_rotation.y = lerp_angle(_rest_rotation.y, atan2(direction.x, direction.z), 1.0)
+
+func restore_facing() -> void:
+	if _facing_saved:
+		_rest_rotation.y = _saved_yaw
+		_facing_saved = false
+
+func refresh_selection() -> void:
+	_update_selection()
 
 func _move_selection(direction: int) -> void:
 	if cards.is_empty():
@@ -107,12 +128,15 @@ func discard_selected() -> Node3D:
 	_update_selection()
 	return card
 
+func _selection_allowed() -> bool:
+	return true
+
 func _update_selection() -> void:
 	for index in cards.size():
 		var card := cards[index]
 		card.set_meta("hand_index", index)
 		if card.has_method("set_selected"):
-			card.set_selected(show_selection and index == selected_index)
+			card.set_selected(show_selection and _selection_allowed() and index == selected_index)
 	hand_changed.emit(cards, selected_index)
 
 func _layout_hand() -> void:

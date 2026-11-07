@@ -25,10 +25,10 @@
 [ext_resource type="AudioStream" uid="uid://cm887m6dnvqxm" path="res://Assets/audio/door.mp3" id="20_door"]
 [ext_resource type="AudioStream" uid="uid://bv8w17lshgqbi" path="res://Assets/audio/ambience.wav" id="21_ambience"]
 [ext_resource type="AudioStream" uid="uid://ca2ad1jjfqqbx" path="res://Assets/audio/backgroundAmbience.wav" id="25_ab83r"]
-[ext_resource type="Script" uid="uid://1s12axch6ju" path="res://volumeFadeIn.gd" id="26_1xb4a"]
 [ext_resource type="Script" uid="uid://badqcvvqn3ike" path="res://scripts/dialogue/dialogue_manager.gd" id="27_uwexw"]
 [ext_resource type="Script" uid="uid://ik8lqjtlcfqt" path="res://scripts/dialogue/dialogue_speaker.gd" id="28_8pgb7"]
 [ext_resource type="Script" uid="uid://dma8ex3iomfjd" path="res://scripts/dealer.gd" id="29_8pgb7"]
+[ext_resource type="Script" uid="uid://da1a2x0xfskb5" path="res://scripts/intro_sequence.gd" id="29_tilu5"]
 
 [sub_resource type="Environment" id="Environment_26a3e"]
 background_energy_multiplier = 0.1
@@ -166,11 +166,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8854113, -4.7918663)
 [node name="wall3" parent="Objects" unique_id=571021478 instance=ExtResource("2_vvh5c")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 11.520955, 0, 1.1372056)
 
-[node name="Player" type="Node3D" parent="." unique_id=89060603 node_paths=PackedStringArray("camera", "hand", "door_look_target", "door", "outside_light", "ambience_audio", "door_audio")]
+[node name="Player" type="Node3D" parent="." unique_id=89060603 node_paths=PackedStringArray("camera", "hand", "left_hand", "right_hand", "door_look_target", "door", "outside_light", "ambience_audio", "door_audio")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6992095, 1.0429318, 5.4799414)
 script = ExtResource("14_3dlgs")
 camera = NodePath("Camera3D")
 hand = NodePath("Camera3D/CardHand")
+left_hand = NodePath("../LeftNpcHand")
+right_hand = NodePath("../RightNpcHand")
 door_look_target = NodePath("../Objects/DoorLookTarget")
 door = NodePath("../Objects/Door")
 outside_light = NodePath("../OutsideLight")
@@ -195,6 +197,7 @@ fan_rotation = 0.09
 
 [node name="TestLight" type="OmniLight3D" parent="." unique_id=1881773175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 0.27138156, 3.4199162)
+visible = false
 light_energy = 5.0
 shadow_enabled = true
 shadow_bias = 0.0
@@ -222,7 +225,7 @@ draw_pile = NodePath("../DealerDiscardPile")
 discard_target = NodePath("../RightNpcDiscardPile")
 set_area = NodePath("../RightNpcSetArea")
 controllable = false
-audio_volume_db = -14.0
+audio_volume_db = -6.0
 auto_play = true
 dealt_by_dealer = true
 hand_limit = 8
@@ -257,7 +260,7 @@ draw_pile = NodePath("../PlayerDiscardPile")
 discard_target = NodePath("../LeftNpcDiscardPile")
 set_area = NodePath("../LeftNpcSetArea")
 controllable = false
-audio_volume_db = -14.0
+audio_volume_db = -6.0
 auto_play = true
 dealt_by_dealer = true
 hand_limit = 8
@@ -273,7 +276,7 @@ draw_pile = NodePath("../DealerDrawPile")
 discard_target = NodePath("../DealerDiscardPile")
 set_area = NodePath("../DealerSetArea")
 controllable = false
-audio_volume_db = -14.0
+audio_volume_db = -6.0
 auto_play = true
 dealt_by_dealer = true
 hand_limit = 8
@@ -320,8 +323,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.9234524)
 [node name="BackgroundAmbience" type="AudioStreamPlayer" parent="." unique_id=2142870789]
 stream = ExtResource("25_ab83r")
 volume_db = -60.0
-autoplay = true
-script = ExtResource("26_1xb4a")
 
 [node name="DialogueManager" type="Node" parent="." unique_id=154195880 node_paths=PackedStringArray("draw_pile")]
 script = ExtResource("27_uwexw")
@@ -351,3 +352,8 @@ dialogue_manager = NodePath("../DialogueManager")
 draw_pile = NodePath("../DealerDrawPile")
 reshuffle_source = NodePath("../LeftNpcDiscardPile")
 hands = [NodePath("../RightNpcHand"), NodePath("../Player/Camera3D/CardHand"), NodePath("../LeftNpcHand"), NodePath("../DealerHand")]
+
+[node name="IntroSequence" type="Node" parent="." unique_id=1385669204 node_paths=PackedStringArray("ambience", "camera")]
+script = ExtResource("29_tilu5")
+ambience = NodePath("../BackgroundAmbience")
+camera = NodePath("../Player/Camera3D")

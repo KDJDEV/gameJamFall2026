@@ -51,6 +51,8 @@ func deal_hands() -> void:
 				await get_tree().process_frame
 			await get_tree().create_timer(deal_gap).timeout
 	_dealt = true
+	for hand in hands:
+		hand.finish_dealing()
 	_set_hands_playing(true)
 	if dialogue_manager != null:
 		dialogue_manager.set_draw_baseline()
