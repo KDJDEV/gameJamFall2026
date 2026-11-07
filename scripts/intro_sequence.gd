@@ -27,6 +27,8 @@ var _path_times: Array[float] = []
 var _path_total: float = 0.0
 var _path_elapsed: float = 0.0
 var _path_active: bool = false
+var _skipped: bool = false
+var _overlay_layer: CanvasLayer
 
 signal _head_done
 
@@ -42,6 +44,7 @@ func _ready() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 5
 	add_child(layer)
+	_overlay_layer = layer
 	var overlay := ColorRect.new()
 	overlay.color = Color.BLACK
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -63,8 +66,27 @@ func _input(event: InputEvent) -> void:
 	if not is_finished and event is InputEventKey:
 		get_viewport().set_input_as_handled()
 
+## Jumps to the end of the opening (eyes open, camera at rest). Only works while the screen is
+## still black, before the ring sounds; used by the ending test mode.
+func skip() -> void:
+	if is_finished or _skipped:
+		return
+	_skipped = true
+	_path_active = false
+	set_process(false)
+	if camera != null:
+		camera.quaternion = _rest_rotation
+	if ambience != null:
+		ambience.volume_db = ambience_target_db
+		ambience.play()
+	_overlay_layer.queue_free()
+	is_finished = true
+	finished.emit()
+
 func _play() -> void:
 	await get_tree().create_timer(black_duration).timeout
+	if _skipped:
+		return
 	var ring := AudioStreamPlayer.new()
 	ring.stream = ring_stream
 	ring.volume_db = ring_volume_db

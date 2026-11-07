@@ -7,10 +7,11 @@
 		"Line fields: speaker (a DialogueSpeaker speaker_id, or 'player' for internal thoughts), text, and optionally",
 		"audio (res:// path to a clip; it plays from the speaker and sets the line length), delay (seconds before the line),",
 		"duration (override the line length), pause (seconds after the line). Without audio the length is estimated from the text.",
-		"event (runs a table action when the line starts: 'shuffle_deck', 'deal_hands', 'wait_for_drain', 'collect_and_deal' or 'start_final_phase'); add \"wait\": true to hold the line until it finishes.",
+		"event (runs a table action when the line starts: 'shuffle_deck', 'deal_hands', 'wait_for_drain', 'collect_and_deal', 'start_final_phase', 'wait_for_game_end', 'begin_ending', 'ending_cards_to_candle', 'ending_burn', 'ending_open_door' or 'ending_fade_out'); add \"wait\": true to hold the line until it finishes.",
 		"A line with no text is a silent step: { \"event\": \"wait_for_drain\", \"wait\": true } runs the action and waits for it; { \"wait\": true } just waits for any action still running.",
 		"Sequence options: \"disable_play\": true stops all players (including you) from playing cards while that sequence runs. \"interrupt\": true makes it start right after the current line of whatever is playing (which then resumes).",
-		"Trigger option: \"round\": 1 or 2 only lets a cards_left trigger fire in that round (round 2 starts once the dealer has collected the final pile and dealt everyone back up to five)."
+		"Trigger option: \"round\": 1 or 2 only lets a cards_left trigger fire in that round (round 2 starts once the dealer has collected the final pile and dealt everyone back up to five).",
+		"Ending: 'begin_ending' (scripts/ending_sequence.gd) queues, if unmatched cards remain, ending_win_<speaker_id> for the player with the most sets (ties go to the dealer), then ending_question_<left_npc|right_npc> and ending_burn. If every card is matched it queues ending_matched (the door opens; the knight's first line waits 8 s via its delay so the door is already swinging)."
 	],
 	"sequences": [
 		{
@@ -61,7 +62,84 @@
 				{ "speaker": "dealer", "text": "That's the last card. Make your final sets, then discard whatever you have left.", "event": "start_final_phase" },
 				{ "speaker": "right_npc", "text": "And then what happens?" },
 				{ "speaker": "dealer", "text": "Nobody told me that part." },
-				{ "speaker": "player", "text": "Nobody told any of us that part." }
+				{ "speaker": "player", "text": "Nobody told any of us that part." },
+				{ "event": "wait_for_game_end", "wait": true },
+				{ "event": "begin_ending", "wait": true }
+			]
+		},
+		{
+			"id": "ending_win_dealer",
+			"trigger": { "type": "manual" },
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "dealer", "text": "As expected, I won.", "pause": 1.5 }
+			]
+		},
+		{
+			"id": "ending_win_left_npc",
+			"trigger": { "type": "manual" },
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "player", "text": "To my dismay, Flynn won." },
+				{ "speaker": "left_npc", "text": "Ha ha, see ya losers!", "pause": 1.5 }
+			]
+		},
+		{
+			"id": "ending_win_right_npc",
+			"trigger": { "type": "manual" },
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "player", "text": "Congrats, Melanie." },
+				{ "speaker": "right_npc", "text": "I'm free!", "pause": 1.5 }
+			]
+		},
+		{
+			"id": "ending_win_player",
+			"trigger": { "type": "manual" },
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "dealer", "text": "Seems like you have the most sets.", "pause": 1.5 }
+			]
+		},
+		{
+			"id": "ending_question_left_npc",
+			"trigger": { "type": "manual" },
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "left_npc", "text": "So what happens now?", "pause": 1.2 }
+			]
+		},
+		{
+			"id": "ending_question_right_npc",
+			"trigger": { "type": "manual" },
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "right_npc", "text": "So what happens now?", "pause": 1.2 }
+			]
+		},
+		{
+			"id": "ending_matched",
+			"trigger": { "type": "manual" },
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "dealer", "text": "Are all cards matched?", "pause": 1.5 },
+				{ "speaker": "left_npc", "text": "Yeah, what's the big deal?", "pause": 1.5 },
+				{ "event": "ending_open_door" },
+				{ "speaker": "knight", "text": "You are all free to go...", "delay": 8.0, "pause": 1.5 },
+				{ "speaker": "knight", "text": "...except you. I saw what you did, and I'll admit, I'm impressed...", "pause": 1.5 },
+				{ "speaker": "knight", "text": "...but it's not supposed to work that way either.", "pause": 2.0 },
+				{ "event": "ending_fade_out", "wait": true }
+			]
+		},
+		{
+			"id": "ending_burn",
+			"trigger": { "type": "manual" },
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "dealer", "text": "We will get rid of the stragglers efficiently.", "pause": 1.2 },
+				{ "event": "ending_cards_to_candle", "wait": true },
+				{ "speaker": "left_npc", "text": "Wait, it's not supposed to work this way!", "event": "ending_burn" },
+				{ "wait": true }
 			]
 		},
 		{

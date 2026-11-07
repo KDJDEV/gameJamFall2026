@@ -17,7 +17,6 @@
 [ext_resource type="Script" uid="uid://clvousp8clg1n" path="res://scripts/routed_card_hand.gd" id="14_sq7yr"]
 [ext_resource type="PackedScene" uid="uid://pu5xp46m242d" path="res://Assets/models/knight.tscn" id="15_po8fv"]
 [ext_resource type="PackedScene" uid="uid://cwiocjc62w54v" path="res://card.tscn" id="15_sq7yr"]
-[ext_resource type="PackedScene" uid="uid://cxj4ah5krwotq" path="res://Assets/models/mug.fbx" id="15_ub8w1"]
 [ext_resource type="Script" uid="uid://burobgjgwpdqx" path="res://scripts/card_pile.gd" id="16_sq7yr"]
 [ext_resource type="Script" uid="uid://cvohkw35qelwi" path="res://scripts/card_deck.gd" id="17_50g4q"]
 [ext_resource type="Resource" uid="uid://c53wx8ffpaqhw" path="res://data/deck_config.tres" id="18_3dlgs"]
@@ -29,6 +28,7 @@
 [ext_resource type="Script" uid="uid://ik8lqjtlcfqt" path="res://scripts/dialogue/dialogue_speaker.gd" id="28_8pgb7"]
 [ext_resource type="Script" uid="uid://dma8ex3iomfjd" path="res://scripts/dealer.gd" id="29_8pgb7"]
 [ext_resource type="Script" uid="uid://da1a2x0xfskb5" path="res://scripts/intro_sequence.gd" id="29_tilu5"]
+[ext_resource type="Script" uid="uid://b7jmq4bvcjqt6" path="res://scripts/ending_sequence.gd" id="30_tilu5"]
 
 [sub_resource type="Environment" id="Environment_26a3e"]
 background_energy_multiplier = 0.1
@@ -155,10 +155,7 @@ stream = ExtResource("20_door")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6871598, 1.5, 1.6131473)
 
 [node name="knight" parent="Objects" unique_id=1619338965 instance=ExtResource("15_po8fv")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7557492, 0.104587734, -1.8708367)
-
-[node name="mug" parent="Objects/knight" unique_id=273275330 instance=ExtResource("15_ub8w1")]
-transform = Transform3D(1, 0, 0, 0, 0.27933675, -0.9601932, 0, 0.9601932, 0.27933675, 0.39323425, -0.31230104, -1.3238554)
+transform = Transform3D(0.99995744, -0.009224502, 0, 0.009224502, 0.99995744, 0, 0, 0, 1, 2.7557492, 0.104587734, -0.16086555)
 
 [node name="floor2" parent="Objects" unique_id=895438748 instance=ExtResource("1_pyidc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8854113, -4.7918663)
@@ -325,7 +322,7 @@ obstacle_radius = 0.095
 stream = ExtResource("21_ambience")
 
 [node name="OutsideLight" type="OmniLight3D" parent="." unique_id=1814074497]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7646008, 1.3199382, 0.08496237)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7646008, 1.046658, -0.9151505)
 light_color = Color(0.98386544, 0.00028040976, 0.285425, 1)
 light_energy = 0.0
 light_size = 1.0
@@ -348,19 +345,19 @@ draw_pile = NodePath("../DealerDrawPile")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.75, 1.45, 4.18)
 script = ExtResource("28_8pgb7")
 speaker_id = &"dealer"
-display_name = "Dealer"
+display_name = "Dian"
 
 [node name="LeftNpcSpeaker" type="Marker3D" parent="." unique_id=1974471369]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.97, 1.45, 5.05)
 script = ExtResource("28_8pgb7")
 speaker_id = &"left_npc"
-display_name = "Left NPC"
+display_name = "Flynn"
 
 [node name="RightNpcSpeaker" type="Marker3D" parent="." unique_id=595901446]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.48, 1.45, 4.96)
 script = ExtResource("28_8pgb7")
 speaker_id = &"right_npc"
-display_name = "Right NPC"
+display_name = "Melanie"
 
 [node name="Dealer" type="Node" parent="." unique_id=1610744365 node_paths=PackedStringArray("dialogue_manager", "draw_pile", "reshuffle_source", "wind_down_piles", "hands")]
 script = ExtResource("29_8pgb7")
@@ -374,3 +371,25 @@ hands = [NodePath("../RightNpcHand"), NodePath("../Player/Camera3D/CardHand"), N
 script = ExtResource("29_tilu5")
 ambience = NodePath("../BackgroundAmbience")
 camera = NodePath("../Player/Camera3D")
+
+[node name="EndingSequence" type="Node" parent="." unique_id=96730144 node_paths=PackedStringArray("dialogue_manager", "final_pile", "draw_pile", "dealer_set_area", "left_set_area", "right_set_area", "player_set_area", "flame", "flame_lights", "camera", "player_view")]
+script = ExtResource("30_tilu5")
+dialogue_manager = NodePath("../DialogueManager")
+final_pile = NodePath("../LeftNpcDiscardPile")
+draw_pile = NodePath("../DealerDrawPile")
+dealer_set_area = NodePath("../DealerSetArea")
+left_set_area = NodePath("../LeftNpcSetArea")
+right_set_area = NodePath("../RightNpcSetArea")
+player_set_area = NodePath("../PlayerSetArea")
+flame = NodePath("../Objects/candle/flame")
+flame_lights = [NodePath("../Objects/CandleLight"), NodePath("../Objects/PlayerLight")]
+camera = NodePath("../Player/Camera3D")
+player_view = NodePath("../Player")
+test_ending = 1
+
+[node name="KnightSpeaker" type="Marker3D" parent="." unique_id=346682807]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.77, 1.7, -1.88)
+script = ExtResource("28_8pgb7")
+speaker_id = &"knight"
+display_name = "Knight"
+icon_pixel_size = 0.004

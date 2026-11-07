@@ -20,8 +20,11 @@ var _shuffling: bool = false
 var _dialogue_locked: bool = false
 var _winding_down: bool = false
 var _empty_time: float = 0.0
+var _awaiting_game_end: bool = false
+var _clear_time: float = 0.0
 
 signal _drained
+signal _game_ended
 
 func _ready() -> void:
 	if dialogue_manager != null:
@@ -30,6 +33,7 @@ func _ready() -> void:
 		dialogue_manager.register_event("wait_for_drain", wait_for_drain)
 		dialogue_manager.register_event("collect_and_deal", collect_and_deal)
 		dialogue_manager.register_event("start_final_phase", start_final_phase)
+		dialogue_manager.register_event("wait_for_game_end", wait_for_game_end)
 		dialogue_manager.play_lock_changed.connect(_on_play_lock_changed)
 	set_process(false)
 
@@ -66,6 +70,14 @@ func wait_for_drain() -> void:
 	set_process(true)
 	await _drained
 
+## Waits for the last round to play out: every hand is empty (sets laid down, the rest
+## discarded) and every pile except the final one has run dry.
+func wait_for_game_end() -> void:
+	_awaiting_game_end = true
+	_clear_time = 0.0
+	set_process(true)
+	await _game_ended
+
 func collect_and_deal() -> void:
 	_shuffling = true
 	_apply_play_state()
@@ -85,16 +97,30 @@ func start_final_phase() -> void:
 		hand.final_phase = true
 
 func _process(delta: float) -> void:
-	if not _winding_down:
-		return
-	if _piles_are_empty():
-		_empty_time += delta
-	else:
-		_empty_time = 0.0
-	if _empty_time >= drain_settle_time:
-		_winding_down = false
+	if _winding_down:
+		if _piles_are_empty():
+			_empty_time += delta
+		else:
+			_empty_time = 0.0
+		if _empty_time >= drain_settle_time:
+			_winding_down = false
+			_drained.emit()
+	if _awaiting_game_end:
+		if _piles_are_empty() and _hands_are_empty():
+			_clear_time += delta
+		else:
+			_clear_time = 0.0
+		if _clear_time >= drain_settle_time:
+			_awaiting_game_end = false
+			_game_ended.emit()
+	if not _winding_down and not _awaiting_game_end:
 		set_process(false)
-		_drained.emit()
+
+func _hands_are_empty() -> bool:
+	for hand in hands:
+		if not hand.cards.is_empty():
+			return false
+	return true
 
 func _piles_are_empty() -> bool:
 	for pile in wind_down_piles:

@@ -84,6 +84,14 @@ func set_draw_baseline() -> void:
 func set_round(round_number: int) -> void:
 	_round = round_number
 
+## Marks every sequence that starts by itself (start, cards_left, cards_drawn triggers) as already
+## played, so only sequences started with play_sequence() run. Used to jump straight to the ending.
+func mark_automatic_sequences_played() -> void:
+	for sequence in _sequences:
+		var trigger: Dictionary = sequence.get("trigger", {})
+		if trigger.get("type", "manual") != "manual":
+			_queued_or_played[sequence["id"]] = true
+
 func play_sequence(sequence_id: String) -> void:
 	var sequence := _find_sequence(sequence_id)
 	if sequence.is_empty():
