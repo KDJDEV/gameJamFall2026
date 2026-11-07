@@ -15,6 +15,7 @@ var base_position := Vector3.ZERO
 var base_rotation := Vector3.ZERO
 var target_position := Vector3.ZERO
 var target_rotation := Vector3.ZERO
+var _look_point: Variant = null
 
 func _ready() -> void:
 	base_position = position
@@ -82,5 +83,21 @@ func set_face_up(face_up: bool) -> void:
 func _refresh_target() -> void:
 	target_position = base_position + Vector3.UP * (0.08 if is_selected else 0.0)
 	target_rotation = base_rotation
+	if is_selected and _look_point != null:
+		target_rotation = _rotation_facing(_look_point)
 	if not is_face_up:
 		target_rotation.y += PI
+
+## Turns the card's face toward a world point (null to stop) while it is selected.
+func set_look_target(world_point: Variant) -> void:
+	_look_point = world_point
+
+func _rotation_facing(world_point: Vector3) -> Vector3:
+	var parent := get_parent() as Node3D
+	if parent == null:
+		return base_rotation
+	var direction := parent.global_transform.basis.inverse() * (world_point - parent.to_global(target_position))
+	if direction.length_squared() < 0.0001:
+		return base_rotation
+	# The card's face is its +Z side, so aim -Z away from the point.
+	return Basis.looking_at(-direction.normalized(), Vector3.UP).get_euler()

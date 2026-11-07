@@ -12,7 +12,9 @@
 [ext_resource type="PackedScene" uid="uid://bl6f8yyq3aliq" path="res://Assets/models/door.fbx" id="8_bf3um"]
 [ext_resource type="PackedScene" uid="uid://bymxj5ngyw6yc" path="res://Assets/models/box.fbx" id="10_tw3kd"]
 [ext_resource type="PackedScene" uid="uid://dv2kif8da301l" path="res://Assets/models/wood pole.fbx" id="12_qw60f"]
+[ext_resource type="Texture2D" uid="uid://iv6bifvvh53b" path="res://Assets/textures/faces/IMG_3286.png" id="13_24xe2"]
 [ext_resource type="PackedScene" uid="uid://dv65tm4h2roqj" path="res://Assets/models/body.tscn" id="13_eji0w"]
+[ext_resource type="Texture2D" path="res://Assets/textures/faces/face1.png" id="13_tilu5"]
 [ext_resource type="Script" uid="uid://ds7d8t70c3mai" path="res://scripts/player_view.gd" id="14_3dlgs"]
 [ext_resource type="Script" uid="uid://clvousp8clg1n" path="res://scripts/routed_card_hand.gd" id="14_sq7yr"]
 [ext_resource type="PackedScene" uid="uid://pu5xp46m242d" path="res://Assets/models/knight.tscn" id="15_po8fv"]
@@ -44,6 +46,13 @@ frequency = 0.1
 [sub_resource type="NoiseTexture3D" id="NoiseTexture3D_qt76e"]
 noise = SubResource("FastNoiseLite_sq7yr")
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tilu5"]
+albedo_color = Color(0.2301948, 0.28727177, 0.1600118, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_26a3e"]
+material = SubResource("StandardMaterial3D_tilu5")
+radius = 0.2
+
 [node name="Root" type="Node3D" unique_id=1180066170]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1734695327]
@@ -72,7 +81,7 @@ shadow_enabled = true
 shadow_bias = 0.0
 shadow_opacity = 0.98
 shadow_blur = 10.0
-omni_range = 0.95
+omni_range = 0.7
 script = ExtResource("6_qwhpj")
 noise = SubResource("NoiseTexture3D_qt76e")
 
@@ -112,6 +121,15 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.50
 [node name="body" parent="Objects" unique_id=1587446387 instance=ExtResource("13_eji0w")]
 transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 2.748417, -0.61173415, 4.184857)
 
+[node name="Head" type="MeshInstance3D" parent="Objects/body" unique_id=1834288906]
+transform = Transform3D(1.2917063, 0, 0, 0, 0.51832163, 0, 0, 0, 1.3550091, -0.011703014, 2.7147171, -0.04206133)
+mesh = SubResource("SphereMesh_26a3e")
+
+[node name="Face" type="Decal" parent="Objects/body/Head" unique_id=1143087440]
+transform = Transform3D(0.7741698, 0, 0, 0, -8.433256e-08, -1.9293041, 0, 0.7380024, -3.225911e-08, -0.007971525, -3.2901764e-05, 0.1422987)
+size = Vector3(0.64, 0.4, 0.64)
+texture_albedo = ExtResource("13_24xe2")
+
 [node name="FloorLight" type="OmniLight3D" parent="Objects" unique_id=894029970]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 0.27138156, 3.4199162)
 light_energy = 0.04
@@ -126,8 +144,26 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8854113, 0)
 [node name="body2" parent="Objects" unique_id=252112887 instance=ExtResource("13_eji0w")]
 transform = Transform3D(-3.059797e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.059797e-08, 1.9662671, -0.5971521, 5.053093)
 
+[node name="Head" type="MeshInstance3D" parent="Objects/body2" unique_id=1877912834]
+transform = Transform3D(1.2917063, 0, 0, 0, 0.51832163, 0, 0, 0, 1.3550091, -0.011703014, 2.7147171, -0.04206133)
+mesh = SubResource("SphereMesh_26a3e")
+
+[node name="Face" type="Decal" parent="Objects/body2/Head" unique_id=1454146454]
+transform = Transform3D(0.7741698, 0, 0, 0, -8.433256e-08, -1.9293041, 0, 0.7380024, -3.225911e-08, -0.007971525, -3.2901764e-05, 0.1422987)
+size = Vector3(0.64, 0.4, 0.64)
+texture_albedo = ExtResource("13_tilu5")
+
 [node name="body3" parent="Objects" unique_id=1394179690 instance=ExtResource("13_eji0w")]
 transform = Transform3D(-3.059797e-08, 0, -0.7, 0, 0.7, 0, 0.7, 0, -3.059797e-08, 3.484254, -0.5971521, 4.9620523)
+
+[node name="Head" type="MeshInstance3D" parent="Objects/body3" unique_id=2111493896]
+transform = Transform3D(1.2917063, 0, 0, 0, 0.51832163, 0, 0, 0, 1.3550091, -0.011703014, 2.7147171, -0.04206133)
+mesh = SubResource("SphereMesh_26a3e")
+
+[node name="Face" type="Decal" parent="Objects/body3/Head" unique_id=1847150972]
+transform = Transform3D(0.7741698, 0, 0, 0, -8.433256e-08, -1.9293041, 0, 0.7380024, -3.225911e-08, -0.007971525, -3.2901764e-05, 0.1422987)
+size = Vector3(0.64, 0.4, 0.64)
+texture_albedo = ExtResource("13_tilu5")
 
 [node name="PlayerLight" type="OmniLight3D" parent="Objects" unique_id=216225429]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5551472, 1.2367551, 5.4318886)
@@ -194,7 +230,6 @@ fan_rotation = 0.09
 
 [node name="TestLight" type="OmniLight3D" parent="." unique_id=1881773175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 0.27138156, 3.4199162)
-visible = false
 light_energy = 5.0
 shadow_enabled = true
 shadow_bias = 0.0

@@ -13,7 +13,8 @@ signal count_changed(count: int)
 @export_range(0.0, 0.1) var shuffle_lift: float = 0.025
 
 var cards: Array[Node3D] = []
-var _shuffle_audio: AudioStreamPlayer3D
+var _shuffle_voices: Array[AudioStreamPlayer3D] = []
+var _next_shuffle_voice: int = 0
 var _shuffle_sounds: Array[AudioStream] = [
 	preload("res://Assets/audio/cardDraw1.mp3"),
 	preload("res://Assets/audio/cardDraw2.mp3")
@@ -70,14 +71,21 @@ func _set_card_in_stack(card: Node3D, index: int) -> void:
 func _stack_position(index: int) -> Vector3:
 	return Vector3(0.0, 0.0, -index * stack_offset)
 
+const SHUFFLE_VOICES := 4
+
+# Sounds are spread over a few players that take turns: restarting one player on every call
+# would cut each sound off before it finished.
 func _play_shuffle_sound() -> void:
-	if _shuffle_audio == null:
-		_shuffle_audio = AudioStreamPlayer3D.new()
-		_shuffle_audio.volume_db = 0.0
-		add_child(_shuffle_audio)
-	_shuffle_audio.stream = _shuffle_sounds.pick_random()
-	_shuffle_audio.pitch_scale = randf_range(1.0, 1.4)
-	_shuffle_audio.play()
+	if _shuffle_voices.is_empty():
+		for voice_index in SHUFFLE_VOICES:
+			var voice := AudioStreamPlayer3D.new()
+			add_child(voice)
+			_shuffle_voices.append(voice)
+	var voice := _shuffle_voices[_next_shuffle_voice]
+	_next_shuffle_voice = (_next_shuffle_voice + 1) % SHUFFLE_VOICES
+	voice.stream = _shuffle_sounds.pick_random()
+	voice.pitch_scale = randf_range(1.0, 1.4)
+	voice.play()
 
 func shuffle(passes: int = 2) -> void:
 	if cards.size() < 2:
@@ -102,7 +110,7 @@ func _shuffle_pass() -> void:
 	for index in cards.size():
 		var card := cards[index]
 		drop_tween.tween_property(card, "position", _stack_position(index), 0.2).set_delay(index * drop_delay)
-		if index % 4 == 0:
+		if index % 6 == 0:
 			drop_tween.tween_callback(_play_shuffle_sound).set_delay(index * drop_delay)
 	await drop_tween.finished
 	_snap_cards_to_stack()

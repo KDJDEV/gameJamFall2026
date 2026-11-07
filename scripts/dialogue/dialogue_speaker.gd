@@ -28,6 +28,9 @@ func _ready() -> void:
 	_icon.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_icon.shaded = false
 	_icon.double_sided = true
+	# Drawn over everything, including walls and people standing in front of the speaker.
+	_icon.no_depth_test = true
+	_icon.render_priority = 127
 	_icon.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_icon.modulate = Color(1.0, 1.0, 1.0, 0.85)
 	_icon.visible = false

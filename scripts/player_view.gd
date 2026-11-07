@@ -4,8 +4,8 @@ extends Node3D
 ## (Project Settings > Input Map), bound to every joystick and button key of the arcade cabinet.
 ## Up: look at the table (only the selected card stays in view); select there discards it and
 ## returns to your hand. From the table, left or right leans over to peek at the neighbouring
-## player's hand: left/right pick one of their cards, select swaps it with your selected card,
-## up or down steps back to the table view.
+## player's hand: up/down pick one of their cards (up goes to the previous card, down to the next),
+## select swaps it with your selected card, left or right steps back to the table view.
 enum ViewState { NORMAL, TABLE, PEEK }
 
 @export var camera: Camera3D
@@ -17,7 +17,12 @@ enum ViewState { NORMAL, TABLE, PEEK }
 @export_range(0.1, 2.0) var transition_time: float = 0.45
 @export var peek_offset := Vector3(0.45, 0.5, 0.05)
 @export_range(0.1, 2.0) var peek_transition_time: float = 0.6
-@export_range(0.0, 3.0) var peek_light_energy: float = 0.6
+## A small light that follows the card you are peeking at. It is dim, short-ranged and casts
+## shadows, so only the cards are lit and the person holding them stays in the dark.
+@export_range(0.0, 2.0) var peek_light_energy: float = 0.06
+@export_range(0.1, 2.0) var peek_light_range: float = 0.4
+## How far in front of the card (toward the camera) the light floats.
+@export_range(0.0, 0.5) var peek_light_distance: float = 0.12
 @export var door_look_target: Node3D
 @export var door: Node3D
 @export var outside_light: Light3D
@@ -41,19 +46,24 @@ var _camera_rest_position: Vector3
 var _tween: Tween
 var _peek_hand: Node3D
 var _peek_light: OmniLight3D
-var _hold_repeat := HoldRepeat.new()
 var _light_tween: Tween
+var _hold_repeat := HoldRepeat.new(0.17, 0.17, &"move_up", &"move_down")
+## 1 or -1: which way up/down scroll through the peeked hand, flipped for the hand on the right so the
+## cards read in the same direction from where you lean.
+var _peek_scroll_sign: int = 1
 
 func _ready() -> void:
 	_camera_rest_quaternion = camera.quaternion
 	_camera_rest_position = camera.position
 	hand.lap_anchor = self
 	_peek_light = OmniLight3D.new()
-	_peek_light.light_energy = peek_light_energy
+	_peek_light.top_level = true
 	_peek_light.light_color = Color(1.0, 0.85, 0.6)
-	_peek_light.omni_range = 1.4
+	_peek_light.light_energy = 0.0
+	_peek_light.omni_range = peek_light_range
+	_peek_light.shadow_enabled = true
 	_peek_light.visible = false
-	camera.add_child(_peek_light)
+	add_child(_peek_light)
 	if test_door_look_delay > 0.0:
 		if door_look_target == null:
 			push_warning("Door look test is enabled but no door target is assigned.")
@@ -68,7 +78,8 @@ func _process(delta: float) -> void:
 	if view_state == ViewState.PEEK and _peek_hand != null and hand.play_enabled and not _looking_at_door:
 		var direction := _hold_repeat.step(delta)
 		if direction != 0:
-			_peek_hand.move_selection(direction)
+			_peek_hand.move_selection(direction * _peek_scroll_sign)
+		_follow_peeked_card(delta)
 	else:
 		_hold_repeat.reset()
 
@@ -94,11 +105,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				handled = false
 		ViewState.PEEK:
-			if event.is_action_pressed("move_left"):
-				_peek_hand.move_selection(-1)
-			elif event.is_action_pressed("move_right"):
-				_peek_hand.move_selection(1)
-			elif event.is_action_pressed("move_down") or event.is_action_pressed("move_up"):
+			if event.is_action_pressed("move_up"):
+				_peek_hand.move_selection(-_peek_scroll_sign)
+			elif event.is_action_pressed("move_down"):
+				_peek_hand.move_selection(_peek_scroll_sign)
+			elif event.is_action_pressed("move_left") or event.is_action_pressed("move_right"):
 				_end_peek()
 				_enter_table_view()
 			elif event.is_action_pressed("select"):
@@ -162,18 +173,19 @@ func _start_peek(target: Node3D) -> void:
 		return
 	view_state = ViewState.PEEK
 	_peek_hand = target
+	_peek_scroll_sign = -1 if target == right_hand else 1
 	target.frozen = true
 	target.show_selection = true
 	target.refresh_selection()
 	hand.set_held_mode(true, true)
-	_peek_light.light_energy = 0.0
+	_peek_light.global_position = _peek_light_target(target)
 	_peek_light.visible = true
 	_fade_peek_light(peek_light_energy, peek_transition_time)
 	var side := signf(target.to_local(global_position).x)
 	if side == 0.0:
 		side = 1.0
 	var camera_world := target.to_global(Vector3(peek_offset.x * side, peek_offset.y, peek_offset.z))
-	target.face_toward(camera_world)
+	target.set_peek_view(camera_world)
 	var peek_transform := global_transform.affine_inverse() * Transform3D(Basis.IDENTITY, camera_world).looking_at(target.global_position, Vector3.UP)
 	_move_camera(peek_transform.origin, peek_transform.basis.get_rotation_quaternion(), peek_transition_time)
 
@@ -182,7 +194,7 @@ func _end_peek() -> void:
 		_fade_peek_light(0.0, peek_transition_time)
 	if _peek_hand == null:
 		return
-	_peek_hand.restore_facing()
+	_peek_hand.clear_peek_view()
 	_peek_hand.show_selection = false
 	_peek_hand.refresh_selection()
 	_peek_hand.frozen = false
@@ -200,6 +212,17 @@ func _swap_with_peeked_hand() -> void:
 	hand.swap_card_with(_peek_hand, hand.selected_index, _peek_hand.selected_index)
 	_end_peek()
 	_enter_normal_view()
+
+func _peek_light_target(hand_node: Node3D) -> Vector3:
+	if hand_node.cards.is_empty():
+		return hand_node.global_position
+	var card: Node3D = hand_node.cards[clampi(hand_node.selected_index, 0, hand_node.cards.size() - 1)]
+	var toward_camera := (camera.global_position - card.global_position).normalized()
+	return card.global_position + toward_camera * peek_light_distance
+
+func _follow_peeked_card(delta: float) -> void:
+	var weight := 1.0 - exp(-12.0 * delta)
+	_peek_light.global_position = _peek_light.global_position.lerp(_peek_light_target(_peek_hand), weight)
 
 func _fade_peek_light(target_energy: float, duration: float) -> void:
 	if _light_tween != null:

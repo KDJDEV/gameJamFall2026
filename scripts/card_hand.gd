@@ -31,8 +31,7 @@ var _bob_phases := Vector3(randf() * TAU, randf() * TAU, randf() * TAU)
 var _bob_rate: float = randf_range(0.75, 1.3)
 var _rest_position := Vector3.ZERO
 var _rest_rotation := Vector3.ZERO
-var _facing_saved: bool = false
-var _saved_yaw: float = 0.0
+var _peek_point: Variant = null
 
 func _ready() -> void:
 	_rest_position = position
@@ -74,17 +73,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func move_selection(direction: int) -> void:
 	_move_selection(direction)
 
-func face_toward(world_point: Vector3) -> void:
-	if not _facing_saved:
-		_saved_yaw = _rest_rotation.y
-		_facing_saved = true
-	var direction := world_point - global_position
-	_rest_rotation.y = lerp_angle(_rest_rotation.y, atan2(direction.x, direction.z), 1.0)
+## While peeked at, only the selected card turns its face toward the given world point.
+func set_peek_view(world_point: Vector3) -> void:
+	_peek_point = world_point
+	_update_selection()
 
-func restore_facing() -> void:
-	if _facing_saved:
-		_rest_rotation.y = _saved_yaw
-		_facing_saved = false
+func clear_peek_view() -> void:
+	_peek_point = null
+	_update_selection()
 
 func refresh_selection() -> void:
 	_update_selection()
@@ -132,6 +128,8 @@ func _update_selection() -> void:
 	for index in cards.size():
 		var card := cards[index]
 		card.set_meta("hand_index", index)
+		if card.has_method("set_look_target"):
+			card.set_look_target(_peek_point if index == selected_index else null)
 		if card.has_method("set_selected"):
 			card.set_selected(show_selection and _selection_allowed() and index == selected_index)
 	hand_changed.emit(cards, selected_index)
