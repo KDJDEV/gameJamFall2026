@@ -54,6 +54,8 @@ func _ready() -> void:
 	_voice = AudioStreamPlayer3D.new()
 	_voice.name = "Voice"
 	_voice.volume_db = voice_volume_db
+	# The default cap (3 dB) would swallow a louder voice.
+	_voice.max_db = maxf(_voice.max_db, voice_volume_db + 3.0)
 	add_child(_voice)
 	set_process(false)
 

@@ -30,7 +30,7 @@
 				{ "speaker": "right_npc", "look_at": "dealer", "text": "Don't flatter yourself. We're all in this prison because we're sucky human beings.", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/intro_cutscene_3.wav", "pause": 1.5 },
 				{ "speaker": "left_npc", "look_at": "dealer", "text": "So, how do we play again?", "audio": "res://Assets/audio/dialogue/melanieLines/intro_cutscene_4.wav" },
 				{ "event": "shuffle_deck", "wait": true },
-				{ "speaker": "dealer", "look_at": "player", "text": "Five cards in hand, no more. Make a set of three and it goes face-up on the table. The player with the most sets wins.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/intro_cutscene_5.wav", "event": "deal_hands" },
+				{ "speaker": "dealer", "look_at": "player", "text": "*Five cards* in hand, no more. Make a *set of three* and it goes face-up on the table. The player with the most sets wins.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/intro_cutscene_5.wav", "event": "deal_hands" },
 				{ "speaker": "left_npc", "look_at": "dealer", "text": "And what happens when the deck runs out?", "audio": "res://Assets/audio/dialogue/melanieLines/intro_cutscene_6.wav" },
 				{ "speaker": "dealer", "look_at": "left_npc", "text": "I reshuffle once. We keep going. After the second time, all unmatched cards are passed around. Then, the game is over. Just like they told us...several times.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/intro_cutscene_7.wav" },
 				{ "speaker": "dealer", "look_at": "player", "text": "And remember, eyes on your own cards.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/intro_cutscene_8.wav", "pause": 1.5 },
@@ -163,8 +163,9 @@
 			"disable_play": true,
 			"lines": [
 				{ "speaker": "dealer", "text": "We will get rid of the stragglers efficiently.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/unmatched_game_over.wav", "pause": 1.2 },
+				{ "speaker": "dealer", "text": "I summon thee, *Beast of Cards Unplayed*! Purge these scroundrels from my sight.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/unmatched_game_over_1.wav", "pause": 1.5 },
 				{ "event": "ending_cards_to_candle", "wait": true },
-				{ "speaker": "right_npc", "look_at": "dealer", "text": "Wait, it's not supposed to work this way!", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/unmatched_game_over_1.wav", "event": "ending_burn" },
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "Wait, it's not supposed to work this way!", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/unmatched_game_over_2.wav", "event": "ending_burn" },
 				{ "wait": true }
 			]
 		},

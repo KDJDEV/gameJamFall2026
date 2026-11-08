@@ -35,8 +35,8 @@ func _ready() -> void:
 	dialogue_manager.sequence_started.connect(_on_sequence_started)
 
 func _on_sequence_started(sequence_id: String) -> void:
-	# Any third-strike ending (from cheating or from this script) ends the game.
-	if sequence_id.begins_with("caught_3"):
+	# A third-strike ending (from cheating or from this script) or either normal ending: the game is over.
+	if sequence_id.begins_with("caught_3") or sequence_id.begins_with("unmatched_game_over") or sequence_id == "all_cards_matched_ending":
 		_finished = true
 
 func _process(delta: float) -> void:
@@ -80,4 +80,4 @@ func _take_too_long() -> void:
 		return
 	var nag := "%s%d" % [nag_sequence_prefix, randi() % nag_variants]
 	if dialogue_manager.has_sequence(nag):
-		dialogue_manager.replay_sequence(nag)
+		dialogue_manager.play_urgent(nag, true)

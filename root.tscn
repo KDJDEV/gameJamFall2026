@@ -441,6 +441,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.75, 1.45, 4.18)
 script = ExtResource("28_8pgb7")
 speaker_id = &"dealer"
 display_name = "Dian"
+voice_volume_db = 4.0
 
 [node name="LeftNpcSpeaker" type="Marker3D" parent="." unique_id=1974471369]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.97, 1.45, 5.05)

@@ -122,22 +122,19 @@ func play_sequence(sequence_id: String) -> void:
 		return
 	_enqueue(sequence)
 
-## Like play_sequence(), but also for a sequence that has already played.
-func replay_sequence(sequence_id: String) -> void:
-	_queued_or_played.erase(sequence_id)
-	play_sequence(sequence_id)
-
 ## Plays a sequence right now, even while another sequence is running or waiting for an event (those
 ## pause before their next line until this one is done). Used for things that cannot wait, like being
-## caught cheating. The sequence only waits for events on its own silent "wait" steps.
-func play_urgent(sequence_id: String) -> void:
+## caught cheating. The sequence only waits for events on its own silent "wait" steps. With
+## repeatable, it can be played again later.
+func play_urgent(sequence_id: String, repeatable: bool = false) -> void:
 	var sequence := _find_sequence(sequence_id)
 	if sequence.is_empty():
 		push_warning("Dialogue sequence '%s' does not exist." % sequence_id)
 		return
 	if _queued_or_played.has(sequence_id):
 		return
-	_queued_or_played[sequence_id] = true
+	if not repeatable:
+		_queued_or_played[sequence_id] = true
 	sequence_started.emit(sequence_id)
 	_urgent_running += 1
 	_box.hide_line()
