@@ -49,12 +49,30 @@ frequency = 0.1
 [sub_resource type="NoiseTexture3D" id="NoiseTexture3D_qt76e"]
 noise = SubResource("FastNoiseLite_sq7yr")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tilu5"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qoqhg"]
+albedo_color = Color(0, 0.15294118, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_udg8a"]
 albedo_color = Color(0.2301948, 0.28727177, 0.1600118, 1)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f6va0"]
+albedo_color = Color(0.47843403, 0.09817595, 0.35112306, 1)
+
 [sub_resource type="SphereMesh" id="SphereMesh_26a3e"]
-material = SubResource("StandardMaterial3D_tilu5")
+material = SubResource("StandardMaterial3D_f6va0")
 radius = 0.2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cr30j"]
+albedo_color = Color(0.211936, 0.00059072074, 0.2240431, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xu2l0"]
+albedo_color = Color(0.21176471, 0, 0.22352941, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lci31"]
+albedo_color = Color(0.11067685, 0.0029130415, 0.27641422, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sc48t"]
+albedo_color = Color(0.10980392, 0.003921569, 0.27450982, 1)
 
 [node name="Root" type="Node3D" unique_id=1180066170]
 
@@ -137,8 +155,12 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 2.50
 [node name="body" parent="Objects" unique_id=1587446387 instance=ExtResource("13_eji0w")]
 transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 2.748417, -0.61173415, 4.184857)
 
+[node name="Torso_011" parent="Objects/body" index="0" unique_id=338371415]
+surface_material_override/0 = SubResource("StandardMaterial3D_qoqhg")
+
 [node name="Head" type="MeshInstance3D" parent="Objects/body" unique_id=1834288906 node_paths=PackedStringArray("hand")]
 transform = Transform3D(1.2917063, 0, 0, 0, 0.51832163, 0, 0, 0, 1.3550091, -0.011703014, 2.7147171, -0.04206133)
+material_override = SubResource("StandardMaterial3D_udg8a")
 mesh = SubResource("SphereMesh_26a3e")
 script = ExtResource("13_24xe2")
 speaker_id = &"dealer"
@@ -151,6 +173,7 @@ texture_albedo = ExtResource("14_cj3xu")
 
 [node name="FloorLight" type="OmniLight3D" parent="Objects" unique_id=894029970]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 0.27138156, 3.4199162)
+visible = false
 light_energy = 0.04
 shadow_enabled = true
 shadow_bias = 0.0
@@ -163,8 +186,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8854113, 0)
 [node name="body2" parent="Objects" unique_id=252112887 instance=ExtResource("13_eji0w")]
 transform = Transform3D(-3.059797e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.059797e-08, 1.9662671, -0.5971521, 5.053093)
 
+[node name="Torso_011" parent="Objects/body2" index="0" unique_id=338371415]
+surface_material_override/0 = SubResource("StandardMaterial3D_cr30j")
+
 [node name="Head" type="MeshInstance3D" parent="Objects/body2" unique_id=1877912834 node_paths=PackedStringArray("hand")]
 transform = Transform3D(1.2917063, 0, 0, 0, 0.51832163, 0, 0, 0, 1.3550091, -0.011703014, 2.7147171, -0.04206133)
+material_override = SubResource("StandardMaterial3D_xu2l0")
 mesh = SubResource("SphereMesh_26a3e")
 script = ExtResource("13_24xe2")
 speaker_id = &"left_npc"
@@ -178,8 +205,12 @@ texture_albedo = ExtResource("14_cj3xu")
 [node name="body3" parent="Objects" unique_id=1394179690 instance=ExtResource("13_eji0w")]
 transform = Transform3D(-3.059797e-08, 0, -0.7, 0, 0.7, 0, 0.7, 0, -3.059797e-08, 3.484254, -0.5971521, 4.9620523)
 
+[node name="Torso_011" parent="Objects/body3" index="0" unique_id=338371415]
+surface_material_override/0 = SubResource("StandardMaterial3D_lci31")
+
 [node name="Head" type="MeshInstance3D" parent="Objects/body3" unique_id=2111493896 node_paths=PackedStringArray("hand")]
 transform = Transform3D(1.2917063, 0, 0, 0, 0.51832163, 0, 0, 0, 1.3550091, -0.011703014, 2.7147171, -0.04206133)
+material_override = SubResource("StandardMaterial3D_sc48t")
 mesh = SubResource("SphereMesh_26a3e")
 script = ExtResource("13_24xe2")
 speaker_id = &"right_npc"
@@ -191,7 +222,7 @@ size = Vector3(0.64, 0.4, 0.64)
 texture_albedo = ExtResource("14_cj3xu")
 
 [node name="PlayerLight" type="OmniLight3D" parent="Objects" unique_id=216225429]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5551472, 1.2367551, 5.4318886)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7004864, 1.2367551, 5.4318886)
 light_color = Color(0.8285371, 0.73699045, 1.540184e-06, 1)
 light_energy = 0.2
 shadow_enabled = true
@@ -255,7 +286,7 @@ fan_height = 0.014
 fan_rotation = 0.09
 
 [node name="TestLight" type="OmniLight3D" parent="." unique_id=1881773175]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 0.27138156, 3.4199162)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7861373, 1.0648425, 4.727474)
 visible = false
 light_energy = 5.0
 shadow_enabled = true
@@ -460,3 +491,7 @@ icon_pixel_size = 0.004
 script = ExtResource("32_cj3xu")
 player_view = NodePath("../Player")
 dialogue_manager = NodePath("../DialogueManager")
+
+[editable path="Objects/body"]
+[editable path="Objects/body2"]
+[editable path="Objects/body3"]
