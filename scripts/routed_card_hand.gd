@@ -36,6 +36,12 @@ var play_enabled: bool = true:
 var awaiting_deal: bool = false
 var frozen: bool = false
 var final_phase: bool = false
+## How much faster than normal this computer-controlled hand plays; the dealer raises it late in the game.
+var speed_multiplier: float = 1.0:
+	set(value):
+		speed_multiplier = maxf(value, 0.1)
+		if _auto_timer != null:
+			_auto_timer.start(_next_auto_interval())
 var _full_hand_size: int = 5
 ## Keeps the selection scrolling while the joystick is held left or right.
 var _hold_repeat := HoldRepeat.new()
@@ -72,13 +78,16 @@ func _ready() -> void:
 	_check_for_sets.call_deferred()
 	if auto_play:
 		_auto_timer = Timer.new()
-		_auto_timer.wait_time = auto_play_interval * randf_range(0.8, 1.2)
+		_auto_timer.wait_time = _next_auto_interval()
 		_auto_timer.timeout.connect(_auto_play_turn)
 		add_child(_auto_timer)
 		_auto_timer.start()
 
+func _next_auto_interval() -> float:
+	return auto_play_interval * randf_range(0.8, 1.2) / speed_multiplier
+
 func _auto_play_turn() -> void:
-	_auto_timer.wait_time = auto_play_interval * randf_range(0.8, 1.2)
+	_auto_timer.wait_time = _next_auto_interval()
 	if draw_in_progress or not play_enabled or frozen:
 		return
 	if final_phase:

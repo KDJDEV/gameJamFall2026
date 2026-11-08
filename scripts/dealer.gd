@@ -12,6 +12,8 @@ signal shuffle_finished
 @export_range(1, 10) var cards_per_hand: int = 5
 @export_range(0.0, 1.0) var deal_gap: float = 0.1
 @export_range(1, 4) var shuffle_passes: int = 2
+## The computer-controlled players start playing this many times faster (see the speed_up_npcs event).
+@export_range(1.0, 10.0) var npc_speed_multiplier: float = 5.0
 @export_range(0.5, 5.0) var drain_settle_time: float = 1.5
 
 var round_number: int = 1
@@ -35,6 +37,8 @@ func _ready() -> void:
 		dialogue_manager.register_event("start_final_phase", start_final_phase)
 		dialogue_manager.register_event("wait_for_game_end", wait_for_game_end)
 		dialogue_manager.register_event("put_cards_down", put_cards_down)
+		dialogue_manager.register_event("speed_up_npcs", speed_up_npcs)
+		dialogue_manager.register_event("slow_down_npcs", slow_down_npcs)
 		dialogue_manager.play_lock_changed.connect(_on_play_lock_changed)
 	set_process(false)
 
@@ -98,6 +102,16 @@ func put_cards_down() -> void:
 	for hand in hands:
 		hand.put_cards_down()
 		await get_tree().create_timer(0.15).timeout
+
+func speed_up_npcs() -> void:
+	for hand in hands:
+		if hand.auto_play:
+			hand.speed_multiplier = npc_speed_multiplier
+
+func slow_down_npcs() -> void:
+	for hand in hands:
+		if hand.auto_play:
+			hand.speed_multiplier = 1.0
 
 func start_final_phase() -> void:
 	for hand in hands:

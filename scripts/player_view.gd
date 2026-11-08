@@ -6,7 +6,8 @@ extends Node3D
 ## Up: look at the table (only the selected card stays in view); select there discards it and
 ## returns to your hand. From the table, left or right leans over to peek at the neighbouring
 ## player's hand: up/down pick one of their cards (up goes to the previous card, down to the next),
-## select swaps it with your selected card, left or right steps back to the table view.
+## select swaps it with your selected card. Leaning left, only right brings you back to the table
+## view; leaning right, only left does.
 ## The longer you stay leaned over, the louder your heartbeat gets and the more the screen closes in.
 enum ViewState { NORMAL, TABLE, PEEK }
 
@@ -163,9 +164,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				_peek_hand.move_selection(-_peek_scroll_sign)
 			elif event.is_action_pressed("move_down"):
 				_peek_hand.move_selection(_peek_scroll_sign)
-			elif event.is_action_pressed("move_left") or event.is_action_pressed("move_right"):
+			# You leaned out to the left or right, so only the opposite direction brings you back.
+			elif event.is_action_pressed("move_right" if _peek_hand == left_hand else "move_left"):
 				_end_peek()
 				_enter_table_view()
+			elif event.is_action_pressed("move_left") or event.is_action_pressed("move_right"):
+				pass
 			elif event.is_action_pressed("select"):
 				_swap_with_peeked_hand()
 			else:
@@ -247,6 +251,10 @@ func _start_peek(target: Node3D) -> void:
 ## The hand you are leaning over to look at, or null.
 func get_peeked_hand() -> Node3D:
 	return _peek_hand
+
+## True while the camera is looking at the door (the endings), when you cannot do anything.
+func is_looking_at_door() -> bool:
+	return _looking_at_door
 
 ## Throws you back to your own hand, e.g. when you were caught.
 func abort_peek() -> void:

@@ -71,9 +71,9 @@ const FLAME_SCENE := preload("res://Assets/flame/flame.tscn")
 @export var magic_stream: AudioStream = preload("res://Assets/audio/magic.wav")
 ## Fades in during the build-up and keeps going until the white-out cuts everything else off.
 @export var roar_stream: AudioStream = preload("res://Assets/audio/roar.wav")
-@export_range(-30.0, 12.0) var magic_volume_db: float = 0.0
-@export_range(-30.0, 12.0) var roar_volume_db: float = 4.0
-@export_range(-80.0, 0.0) var roar_fade_start_db: float = -30.0
+@export_range(-30.0, 12.0) var magic_volume_db: float = -8.0
+@export_range(-30.0, 12.0) var roar_volume_db: float = -4.0
+@export_range(-80.0, 0.0) var roar_fade_start_db: float = -38.0
 ## When the roar begins, as a fraction of the build-up (swirl_duration).
 @export_range(0.0, 1.0) var roar_start_fraction: float = 0.15
 

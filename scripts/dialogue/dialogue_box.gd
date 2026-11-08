@@ -8,7 +8,7 @@ extends CanvasLayer
 @export var padding := Vector2(16.0, 8.0)
 
 var _panel: PanelContainer
-var _label: Label
+var _label: RichTextLabel
 var _tween: Tween
 
 func _ready() -> void:
@@ -39,19 +39,35 @@ func _ready() -> void:
 	_panel.add_theme_stylebox_override("panel", style)
 	_panel.modulate.a = 0.0
 	column.add_child(_panel)
-	_label = Label.new()
-	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_label = RichTextLabel.new()
+	_label.bbcode_enabled = true
+	_label.fit_content = true
+	_label.scroll_active = false
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_label.add_theme_font_size_override("font_size", font_size)
+	_label.add_theme_font_size_override("normal_font_size", font_size)
+	_label.add_theme_font_size_override("bold_font_size", font_size)
+	_label.add_theme_color_override("default_color", Color.WHITE)
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(_label)
+	var bold := FontVariation.new()
+	bold.base_font = _label.get_theme_font("normal_font")
+	bold.variation_embolden = 0.9
+	_label.add_theme_font_override("bold_font", bold)
 
+## Text between asterisks is shown in bold: "their *eyes* are on you".
 func show_line(text: String) -> void:
-	_label.text = text
+	var plain := text.replace("*", "")
+	_label.text = "[center]%s[/center]" % _to_bbcode(text)
 	var max_width := get_viewport().get_visible_rect().size.x * max_width_fraction
-	var text_width := _label.get_theme_font("font").get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	_label.custom_minimum_size.x = minf(text_width + 2.0, max_width)
+	var text_width := _label.get_theme_font("normal_font").get_string_size(plain, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	# A little extra room, since bold letters are wider.
+	_label.custom_minimum_size.x = minf(text_width * 1.06 + 8.0, max_width)
 	_fade_to(1.0)
+
+func _to_bbcode(text: String) -> String:
+	var escaped := text.replace("[", "[lb]")
+	var bold_marks := RegEx.create_from_string("\\*(.+?)\\*")
+	return bold_marks.sub(escaped, "[b]$1[/b]", true)
 
 func hide_line() -> void:
 	_fade_to(0.0)

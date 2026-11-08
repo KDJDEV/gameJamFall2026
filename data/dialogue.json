@@ -4,11 +4,11 @@
 		"Triggers: {\"type\": \"start\", \"delay\": 2.0} | {\"type\": \"cards_left\", \"value\": 20} | {\"type\": \"cards_drawn\", \"value\": 5} | {\"type\": \"manual\"}",
 		"cards_left / cards_drawn count the draw pile (deck); cards_drawn counts from when the dealer finishes dealing. A sequence plays once and sequences that trigger together are queued.",
 		"A 'manual' sequence never starts by itself; include it from another sequence with a line like { \"play_sequence\": \"shuffle\" }.",
-		"Line fields: speaker (a DialogueSpeaker speaker_id, or 'player' for internal thoughts), text, and optionally",
+		"Line fields: speaker (a DialogueSpeaker speaker_id, or 'player' for internal thoughts), text (put *asterisks* around words to show them in bold), and optionally",
 		"look_at (a speaker_id or 'player': the speaker looks at them while the line plays and they glance back; add \"look_back\": false to stop that),",
 		"audio (res:// path to a clip; it plays from the speaker and sets the line length), delay (seconds before the line),",
 		"duration (override the line length), pause (seconds after the line). Without audio the length is estimated from the text.",
-		"event (runs a table action when the line starts: 'shuffle_deck', 'deal_hands', 'wait_for_drain', 'collect_and_deal', 'start_final_phase', 'wait_for_game_end', 'begin_ending', 'ending_cards_to_candle', 'ending_burn', 'ending_open_door', 'ending_fade_out', 'ending_fade_white' or 'put_cards_down' (everyone lays their cards face down)); add \"wait\": true to hold the line until it finishes.",
+		"event (runs a table action when the line starts: 'shuffle_deck', 'deal_hands', 'wait_for_drain', 'collect_and_deal', 'start_final_phase', 'speed_up_npcs' (the computer players play faster), 'slow_down_npcs' (back to normal speed), 'wait_for_game_end', 'begin_ending', 'ending_cards_to_candle', 'ending_burn', 'ending_open_door', 'ending_fade_out', 'ending_fade_white' or 'put_cards_down' (everyone lays their cards face down)); add \"wait\": true to hold the line until it finishes.",
 		"Variables: in a line's \"speaker\" and \"look_at\", \"$name\" stands for whoever the code has set with set_variable(\"name\", id); the cheat watcher sets \"$complainer\" to the owner of the hand you were caught looking at.",
 		"Cheating (scripts/cheat_watch.gd): cheat_first_peek and cheat_first_swap play the first time you peek / swap, got_away_1, got_away_2... play after each swap nobody noticed, and caught_1, caught_2, caught_3 play for each strike (the third ends the game).",
 		"A line with no text is a silent step: { \"event\": \"wait_for_drain\", \"wait\": true } runs the action and waits for it; { \"wait\": true } just waits for any action still running.",
@@ -50,9 +50,11 @@
 				{ "speaker": "dealer", "text": "The first round must come to an end. Everybody make sure your discard pile is empty." },
 				{ "speaker": "dealer", "text": "Then we wait until every card has made it to the final pile: the left's discard." },
 				{ "speaker": "player", "text": "So I keep discarding until every pile runs dry." },
+				{ "event": "speed_up_npcs" },
 				{ "event": "wait_for_drain", "wait": true },
 				{ "speaker": "dealer", "text": "That's all of them. I'll collect the final pile, shuffle it, and deal everyone back up to five.", "event": "collect_and_deal" },
 				{ "wait": true },
+				{ "event": "slow_down_npcs" },
 				{ "speaker": "dealer", "text": "Round two. This deck is the last one, so make it count." },
 				{ "speaker": "player", "text": "Last chance. Whoever has the most sets walks out of here." }
 			]
@@ -63,6 +65,7 @@
 			"interrupt": true,
 			"lines": [
 				{ "speaker": "dealer", "text": "That's the last card. Make your final sets, then discard whatever you have left.", "event": "start_final_phase" },
+				{ "event": "speed_up_npcs" },
 				{ "speaker": "right_npc", "look_at": "dealer", "text": "And then what happens?" },
 				{ "speaker": "dealer", "look_at": "right_npc", "text": "Nobody told me that part." },
 				{ "speaker": "player", "text": "Nobody told any of us that part." },
@@ -192,7 +195,7 @@
 			"lines": [
 				{ "speaker": "$complainer", "look_at": "player", "text": "Hey, stop looking at my cards!" },
 				{ "speaker": "dealer", "look_at": "$complainer", "text": "No arguing." },
-				{ "speaker": "player", "text": "I must steal when they're not looking at their own cards." }
+				{ "speaker": "player", "text": "I must steal when their *eyes* are not on their own cards." }
 			]
 		},
 		{

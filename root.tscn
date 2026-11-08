@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" uid="uid://bgk41nwt3g7mc" path="res://Assets/models/wine bottle.fbx" id="1_gd4vy"]
 [ext_resource type="PackedScene" uid="uid://dgqg7j72drjrw" path="res://Assets/models/floor.fbx" id="1_pyidc"]
+[ext_resource type="Texture2D" uid="uid://dm8edwjeesfqp" path="res://Assets/textures/iconBackground.png" id="1_ql764"]
+[ext_resource type="Script" uid="uid://c84eunn7giyft" path="res://scripts/available_icons.gd" id="2_qoqhg"]
 [ext_resource type="PackedScene" uid="uid://bbuna6cgmgv1c" path="res://Assets/models/wall.fbx" id="2_vvh5c"]
 [ext_resource type="PackedScene" uid="uid://b67j7b1oi0kkf" path="res://Assets/models/wall with doorhol.fbx" id="3_vvh5c"]
 [ext_resource type="PackedScene" uid="uid://dgrr3cvk6fyr" path="res://Assets/models/bar_2.fbx" id="4_28aoi"]
@@ -60,6 +62,19 @@ radius = 0.2
 environment = SubResource("Environment_26a3e")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=764138658]
+layer = 10
+
+[node name="AvailableIcons" type="TextureRect" parent="CanvasLayer" unique_id=1164482039 node_paths=PackedStringArray("player_view", "dealer")]
+modulate = Color(1, 1, 1, 0.20392157)
+offset_left = 113.0
+offset_top = 815.0
+offset_right = 388.0
+offset_bottom = 962.0
+texture = ExtResource("1_ql764")
+expand_mode = 1
+script = ExtResource("2_qoqhg")
+player_view = NodePath("../../Player")
+dealer = NodePath("../../Dealer")
 
 [node name="Objects" type="Node3D" parent="." unique_id=1758704438]
 
@@ -196,6 +211,7 @@ transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 4.54
 [node name="DoorAudio" type="AudioStreamPlayer3D" parent="Objects/Door" unique_id=1181411162]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 stream = ExtResource("20_door")
+volume_db = -6.0
 
 [node name="DoorLookTarget" type="Marker3D" parent="Objects" unique_id=320170324]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6871598, 1.5, 1.6131473)
@@ -366,6 +382,7 @@ obstacle_radius = 0.095
 
 [node name="AmbienceAudio" type="AudioStreamPlayer" parent="." unique_id=333435411]
 stream = ExtResource("21_ambience")
+volume_db = -6.0
 
 [node name="OutsideLight" type="OmniLight3D" parent="." unique_id=1814074497]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7646008, 1.046658, -0.9151505)

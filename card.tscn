@@ -4,6 +4,8 @@
 
 [ext_resource type="Texture2D" path="res://Assets/cardTextures/blank.png" id="2_blank"]
 
+[ext_resource type="FontFile" path="res://Assets/fonts/IMFellEnglishSC.ttf" id="3_font"]
+
 [sub_resource type="BoxMesh" id="BoxMesh_rjlel"]
 size = Vector3(1.4, 0.04, 2)
 
@@ -14,7 +16,10 @@ albedo_color = Color(0.22, 0.05, 0.06, 1)
 size = Vector2(1.4, 2)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_front"]
+transparency = 2
+alpha_scissor_threshold = 0.5
 albedo_texture = ExtResource("2_blank")
+texture_filter = 4
 
 [node name="Card" type="Node3D" unique_id=118556354]
 transform = Transform3D(0.055, 0, 0, 0, 0.055, 0, 0, 0, 0.055, 0, 0, 0)
@@ -31,12 +36,11 @@ mesh = SubResource("QuadMesh_front")
 surface_material_override/0 = SubResource("StandardMaterial3D_front")
 
 [node name="Label" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0215)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.81, 0.0222)
 pixel_size = 0.006
 double_sided = false
 modulate = Color(0, 0, 0, 1)
 outline_size = 0
 text = ""
-font_size = 64
-autowrap_mode = 3
-width = 220.0
+font = ExtResource("3_font")
+font_size = 36
