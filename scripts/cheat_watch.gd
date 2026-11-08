@@ -16,6 +16,11 @@ extends Node
 ## Who owns the hand on your left and the hand on your right (speaker ids).
 @export var left_speaker_id: StringName = &"left_npc"
 @export var right_speaker_id: StringName = &"right_npc"
+## How the owners are named in the personal reactions: caught_1 plays as caught_1_<name> when that exists.
+@export var caught_names: Dictionary = {
+	&"left_npc": "melanie",
+	&"right_npc": "flynn",
+}
 ## How long the owner has to keep noticing you, while you are leaned over, before you are caught.
 @export_range(0.1, 5.0) var catch_reaction: float = 0.8
 ## The heartbeat and vignette only build up in the last this many seconds before the owner stops
@@ -89,6 +94,9 @@ func _catch() -> void:
 		_game_over = true
 	# Urgent: the reaction must play now, not after whatever else is going on (like the round ending).
 	var caught_id := "caught_%d" % mini(strikes, max_strikes)
+	var personal_id := "%s_%s" % [caught_id, caught_names.get(victim, "")]
+	if dialogue_manager.has_sequence(personal_id):
+		caught_id = personal_id
 	if dialogue_manager.has_sequence(caught_id):
 		dialogue_manager.play_urgent(caught_id)
 

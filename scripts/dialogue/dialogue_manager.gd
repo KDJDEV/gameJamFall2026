@@ -122,6 +122,11 @@ func play_sequence(sequence_id: String) -> void:
 		return
 	_enqueue(sequence)
 
+## Like play_sequence(), but also for a sequence that has already played.
+func replay_sequence(sequence_id: String) -> void:
+	_queued_or_played.erase(sequence_id)
+	play_sequence(sequence_id)
+
 ## Plays a sequence right now, even while another sequence is running or waiting for an event (those
 ## pause before their next line until this one is done). Used for things that cannot wait, like being
 ## caught cheating. The sequence only waits for events on its own silent "wait" steps.

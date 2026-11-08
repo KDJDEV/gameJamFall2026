@@ -18,7 +18,10 @@ extends Node3D
 @export_range(0.0, 0.3) var art_padding: float = 0.04
 ## Largest size of the name; longer names are shrunk to fit the box.
 @export_range(8, 128) var name_font_size: int = 36
+## How strongly the card's colours are pushed away from mid-grey (1 = the pictures as drawn).
+@export_range(0.5, 3.0) var contrast: float = 1.5
 
+const ART_SHADER := preload("res://shaders/card_art.gdshader")
 # The card face in card units (the Front quad in card.tscn).
 const FACE_SIZE := Vector2(1.4, 2.0)
 const ART_DEPTH := 0.0212
@@ -63,7 +66,15 @@ func assign_set(new_set_id: int, new_set_def: CardSetDef) -> void:
 			label.modulate = set_def.label_color
 		_fit_name(label)
 	_apply_art()
+	_apply_background_contrast()
 
+func _apply_background_contrast() -> void:
+	var front := get_node_or_null("Front") as MeshInstance3D
+	if front == null:
+		return
+	var material := front.get_surface_override_material(0) as ShaderMaterial
+	if material != null:
+		material.set_shader_parameter("contrast", contrast)
 # The art sits on top of the background (Front), inside the area below the name box.
 func _apply_art() -> void:
 	var art := get_node_or_null("Art") as MeshInstance3D
@@ -85,7 +96,7 @@ func _apply_art() -> void:
 func _art_for(def: CardSetDef) -> Dictionary:
 	var texture := def.art_texture
 	var texture_key := texture.resource_path if not texture.resource_path.is_empty() else str(texture.get_instance_id())
-	var key := "%s|%s|%s|%s|%s" % [texture_key, str(def.tint), str(background_size), str(art_rect), str(art_padding)]
+	var key := "%s|%s|%s|%s|%s|%s" % [texture_key, str(def.tint), str(background_size), str(art_rect), str(art_padding), str(contrast)]
 	if _art_cache.has(key):
 		return _art_cache[key]
 	var area := _to_face(art_rect)
@@ -104,13 +115,14 @@ func _art_for(def: CardSetDef) -> Dictionary:
 	var scale_to_fit := minf(max_size.x / visible_rect.size.x, max_size.y / visible_rect.size.y)
 	var quad := QuadMesh.new()
 	quad.size = visible_rect.size * scale_to_fit
-	var material := StandardMaterial3D.new()
-	material.albedo_texture = texture
-	material.albedo_color = def.tint
-	material.uv1_scale = Vector3(visible_rect.size.x / tex_size.x, visible_rect.size.y / tex_size.y, 1.0)
-	material.uv1_offset = Vector3(visible_rect.position.x / tex_size.x, visible_rect.position.y / tex_size.y, 0.0)
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	var visible_rect_scale := Vector2(visible_rect.size.x / tex_size.x, visible_rect.size.y / tex_size.y)
+	var material := ShaderMaterial.new()
+	material.shader = ART_SHADER
+	material.set_shader_parameter("albedo_texture", texture)
+	material.set_shader_parameter("tint", def.tint)
+	material.set_shader_parameter("contrast", contrast)
+	material.set_shader_parameter("uv_scale", visible_rect_scale)
+	material.set_shader_parameter("uv_offset", Vector2(visible_rect.position.x / tex_size.x, visible_rect.position.y / tex_size.y))
 	quad.material = material
 	var entry := {"mesh": quad}
 	_art_cache[key] = entry

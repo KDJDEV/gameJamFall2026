@@ -15,8 +15,20 @@ signal shuffle_finished
 ## The computer-controlled players start playing this many times faster (see the speed_up_npcs event).
 @export_range(1.0, 10.0) var npc_speed_multiplier: float = 5.0
 @export_range(0.5, 5.0) var drain_settle_time: float = 1.5
+## How long a computer player must have nothing left to draw before they say it.
+@export_range(0.0, 5.0) var go_out_settle_time: float = 0.8
+## The dialogue sequence each computer player (speaker id) plays when they run out of cards at the end.
+@export var go_out_sequences: Dictionary = {
+	&"left_npc": "melanie_goes_out",
+	&"right_npc": "flynn_goes_out",
+}
 
 var round_number: int = 1
+var _watching_go_outs: bool = false
+var _announced_go_outs: Array[StringName] = []
+var _out_time: Dictionary = {}
+var _pending_go_outs: Array[String] = []
+var _announcing_go_outs: bool = false
 var _dealt: bool = false
 var _shuffling: bool = false
 var _dialogue_locked: bool = false
@@ -116,8 +128,67 @@ func slow_down_npcs() -> void:
 func start_final_phase() -> void:
 	for hand in hands:
 		hand.final_phase = true
+	_watching_go_outs = true
+	set_process(true)
+
+# Computer players say a line (their entry in go_out_sequences) as they run out of cards at the end.
+func _check_go_outs(delta: float) -> void:
+	for node in get_tree().get_nodes_in_group("character_face"):
+		var face := node as CharacterFace
+		if face == null or not go_out_sequences.has(face.speaker_id) or _announced_go_outs.has(face.speaker_id):
+			continue
+		var hand := face.hand
+		if hand != null and hand.auto_play and not _could_still_draw(hand):
+			# Cards in flight between piles are in neither place, so the state must hold for a moment.
+			_out_time[face.speaker_id] = float(_out_time.get(face.speaker_id, 0.0)) + delta
+			if _out_time[face.speaker_id] >= go_out_settle_time:
+				_announced_go_outs.append(face.speaker_id)
+				_announce_go_out(String(go_out_sequences[face.speaker_id]))
+		else:
+			_out_time[face.speaker_id] = 0.0
+
+# A hand is really out only when it holds nothing and no card upstream of it can ever reach it:
+# not in the pile it draws from, and not in (or on the way to) any hand or pile that feeds that pile.
+func _could_still_draw(hand: Node3D) -> bool:
+	if not hand.cards.is_empty() or hand.draw_in_progress:
+		return true
+	var seen_piles: Array[Node] = []
+	var to_check: Array[Node] = []
+	if hand.draw_pile != null:
+		to_check.append(hand.draw_pile)
+	while not to_check.is_empty():
+		var pile: Node = to_check.pop_back()
+		if pile in seen_piles:
+			continue
+		seen_piles.append(pile)
+		if pile.has_method("has_cards") and pile.has_cards():
+			return true
+		for other in hands:
+			if other.discard_target != pile:
+				continue
+			if not other.cards.is_empty() or other.draw_in_progress:
+				return true
+			if other.draw_pile != null:
+				to_check.append(other.draw_pile)
+	return false
+
+# One at a time, so two players running out together do not talk over each other.
+func _announce_go_out(sequence_id: String) -> void:
+	_pending_go_outs.append(sequence_id)
+	if _announcing_go_outs or dialogue_manager == null:
+		return
+	_announcing_go_outs = true
+	while not _pending_go_outs.is_empty():
+		var next_id: String = _pending_go_outs.pop_front()
+		if dialogue_manager.has_sequence(next_id):
+			await dialogue_manager.play_urgent(next_id)
+	_announcing_go_outs = false
 
 func _process(delta: float) -> void:
+	if _watching_go_outs:
+		_check_go_outs(delta)
+		if _announced_go_outs.size() >= go_out_sequences.size():
+			_watching_go_outs = false
 	if _winding_down:
 		if _piles_are_empty():
 			_empty_time += delta
@@ -134,7 +205,7 @@ func _process(delta: float) -> void:
 		if _clear_time >= drain_settle_time:
 			_awaiting_game_end = false
 			_game_ended.emit()
-	if not _winding_down and not _awaiting_game_end:
+	if not _winding_down and not _awaiting_game_end and not _watching_go_outs:
 		set_process(false)
 
 func _hands_are_empty() -> bool:

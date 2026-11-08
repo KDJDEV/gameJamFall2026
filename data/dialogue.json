@@ -3,198 +3,209 @@
 		"HOW TO ADD DIALOGUE: append an entry to 'sequences'. Each sequence has an id, a trigger and a list of lines.",
 		"Triggers: {\"type\": \"start\", \"delay\": 2.0} | {\"type\": \"cards_left\", \"value\": 20} | {\"type\": \"cards_drawn\", \"value\": 5} | {\"type\": \"manual\"}",
 		"cards_left / cards_drawn count the draw pile (deck); cards_drawn counts from when the dealer finishes dealing. A sequence plays once and sequences that trigger together are queued.",
-		"A 'manual' sequence never starts by itself; include it from another sequence with a line like { \"play_sequence\": \"shuffle\" }.",
+		"A 'manual' sequence never starts by itself; include it from another sequence with a line like { \"play_sequence\": \"shuffle\" }, or the code starts it (see below).",
+		"Speakers: dealer = Dian, left_npc = Melanie, right_npc = Flynn, knight, and 'player' for your internal thoughts.",
 		"Line fields: speaker (a DialogueSpeaker speaker_id, or 'player' for internal thoughts), text (put *asterisks* around words to show them in bold), and optionally",
 		"look_at (a speaker_id or 'player': the speaker looks at them while the line plays and they glance back; add \"look_back\": false to stop that),",
-		"audio (res:// path to a clip; it plays from the speaker and sets the line length), delay (seconds before the line),",
+		"audio (res:// path to a clip; it plays from the speaker and the line stays up for the length of the clip), delay (seconds before the line),",
 		"duration (override the line length), pause (seconds after the line). Without audio the length is estimated from the text.",
 		"event (runs a table action when the line starts: 'shuffle_deck', 'deal_hands', 'wait_for_drain', 'collect_and_deal', 'start_final_phase', 'speed_up_npcs' (the computer players play faster), 'slow_down_npcs' (back to normal speed), 'wait_for_game_end', 'begin_ending', 'ending_cards_to_candle', 'ending_burn', 'ending_open_door', 'ending_fade_out', 'ending_fade_white' or 'put_cards_down' (everyone lays their cards face down)); add \"wait\": true to hold the line until it finishes.",
 		"Variables: in a line's \"speaker\" and \"look_at\", \"$name\" stands for whoever the code has set with set_variable(\"name\", id); the cheat watcher sets \"$complainer\" to the owner of the hand you were caught looking at.",
-		"Cheating (scripts/cheat_watch.gd): cheat_first_peek and cheat_first_swap play the first time you peek / swap, got_away_1, got_away_2... play after each swap nobody noticed, and caught_1, caught_2, caught_3 play for each strike (the third ends the game).",
+		"Cheating (scripts/cheat_watch.gd): caught_1, caught_2, caught_3 play for each strike (the third ends the game). It plays caught_<strike>_flynn or caught_<strike>_melanie (whoever you were looking at) when that exists. Taking too long (scripts/idle_watch.gd): taking_too_long_0, _1 and _2 are the three things Melanie says (one is picked at random each time) and the last strike plays caught_3_melanie.",
+		"Going out (scripts/dealer.gd): when the last cards are being discarded, flynn_goes_out and melanie_goes_out play as each of them runs out of cards.",
 		"A line with no text is a silent step: { \"event\": \"wait_for_drain\", \"wait\": true } runs the action and waits for it; { \"wait\": true } just waits for any action still running.",
 		"Sequence options: \"disable_play\": true stops all players (including you) from playing cards while that sequence runs. \"interrupt\": true makes it start right after the current line of whatever is playing (which then resumes).",
 		"Trigger option: \"round\": 1 or 2 only lets a cards_left trigger fire in that round (round 2 starts once the dealer has collected the final pile and dealt everyone back up to five).",
-		"Ending: 'begin_ending' (scripts/ending_sequence.gd) queues, if unmatched cards remain, ending_win_<speaker_id> for the player with the most sets (ties go to the dealer), then ending_question_<left_npc|right_npc> and ending_burn. If every card is matched it queues ending_matched (the door opens; the knight's first line waits 8 s via its delay so the door is already swinging)."
+		"Ending: 'begin_ending' (scripts/ending_sequence.gd) queues, if unmatched cards remain, unmatched_game_over_<flynn|melanie|player|dian>_wins (or unmatched_game_over_tie) and then unmatched_game_over. If every card is matched it queues all_cards_matched_ending and stealing_ending (the knight's line waits 8 s via its delay so the door is already swinging)."
 	],
 	"sequences": [
 		{
-			"id": "intro",
+			"id": "intro_cutscene",
 			"trigger": { "type": "start", "delay": 2.0 },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "dealer", "text": "Well, I guess I start since I'm the dealer." },
-				{ "speaker": "left_npc", "look_at": "dealer", "text": "Why did they choose you to be the dealer anyway?" },
-				{ "speaker": "dealer", "look_at": "left_npc", "text": "Probably because I'm the worst criminal here." },
-				{ "speaker": "right_npc", "look_at": "dealer", "text": "Ha. Don't flatter yourself." },
-				{ "play_sequence": "shuffle" },
-				{ "speaker": "dealer", "look_at": "player", "text": "Five cards in hand, no more. Make a set and it goes face up on the table. No arguing.", "event": "deal_hands" },
-				{ "speaker": "left_npc", "look_at": "dealer", "text": "And when the deck runs out?" },
-				{ "speaker": "dealer", "look_at": "left_npc", "text": "I reshuffle. Once. Same as they told us." },
-				{ "speaker": "right_npc", "look_at": "left_npc", "text": "They told us the rules a dozen times." },
-				{ "speaker": "player", "text": "I can't afford to lose. I'm not dying tonight." },
-				{ "speaker": "player", "text": "I should probably be careful that they're not watching when I peek at their cards." }
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "Welcome back. How'd the table taste?", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/intro_cutscene_0.wav", "pause": 1.5 },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "So why'd they make you the dealer?", "audio": "res://Assets/audio/dialogue/melanieLines/intro_cutscene_1.wav" },
+				{ "speaker": "dealer", "look_at": "left_npc", "text": "If you knew what I've done—", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/intro_cutscene_2.wav" },
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "Don't flatter yourself. We're all in this prison because we're sucky human beings.", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/intro_cutscene_3.wav", "pause": 1.5 },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "So, how do we play again?", "audio": "res://Assets/audio/dialogue/melanieLines/intro_cutscene_4.wav" },
+				{ "event": "shuffle_deck", "wait": true },
+				{ "speaker": "dealer", "look_at": "player", "text": "Five cards in hand, no more. Make a set of three and it goes face-up on the table. The player with the most sets wins.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/intro_cutscene_5.wav", "event": "deal_hands" },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "And what happens when the deck runs out?", "audio": "res://Assets/audio/dialogue/melanieLines/intro_cutscene_6.wav" },
+				{ "speaker": "dealer", "look_at": "left_npc", "text": "I reshuffle once. We keep going. After the second time, all unmatched cards are passed around. Then, the game is over. Just like they told us...several times.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/intro_cutscene_7.wav" },
+				{ "speaker": "dealer", "look_at": "player", "text": "And remember, eyes on your own cards.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/intro_cutscene_8.wav", "pause": 1.5 },
+				{ "speaker": "right_npc", "look_at": "left_npc", "text": "The winner leaves and the rest of us are \"taken care of\".", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/intro_cutscene_9.wav" },
+				{ "speaker": "left_npc", "look_at": "right_npc", "text": "I can't afford to die tonight!", "audio": "res://Assets/audio/dialogue/melanieLines/intro_cutscene_10.wav" },
+				{ "speaker": "dealer", "look_at": "left_npc", "text": "I don't think any of us can.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/intro_cutscene_11.wav" }
 			]
 		},
 		{
-			"id": "shuffle",
+			"id": "five_cards_drawn",
+			"trigger": { "type": "cards_drawn", "value": 5 },
+			"lines": [
+				{ "speaker": "right_npc", "look_at": "left_npc", "text": "Who made these cards?", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/five_cards_drawn_0.wav" },
+				{ "speaker": "left_npc", "look_at": "right_npc", "text": "Don't know. They creep me out a little.", "audio": "res://Assets/audio/dialogue/melanieLines/five_cards_drawn_1.wav" }
+			]
+		},
+		{
+			"id": "taking_too_long_0",
 			"trigger": { "type": "manual" },
 			"lines": [
-				{ "speaker": "dealer", "text": "Hold on, let me shuffle.", "event": "shuffle_deck", "wait": true }
+				{ "speaker": "left_npc", "look_at": "player", "text": "Hurry up and give me something!", "audio": "res://Assets/audio/dialogue/melanieLines/taking_too_long_0.wav" }
 			]
 		},
 		{
-			"id": "round_two",
+			"id": "taking_too_long_1",
+			"trigger": { "type": "manual" },
+			"lines": [
+				{ "speaker": "left_npc", "look_at": "player", "text": "We're all waiting on you.", "audio": "res://Assets/audio/dialogue/melanieLines/taking_too_long_1.wav" }
+			]
+		},
+		{
+			"id": "taking_too_long_2",
+			"trigger": { "type": "manual" },
+			"lines": [
+				{ "speaker": "left_npc", "look_at": "player", "text": "Just pick a card and get rid of it.", "audio": "res://Assets/audio/dialogue/melanieLines/taking_too_long_2.wav" }
+			]
+		},
+		{
+			"id": "round_one_reshuffle",
 			"trigger": { "type": "cards_left", "value": 0, "round": 1 },
 			"interrupt": true,
 			"lines": [
-				{ "speaker": "dealer", "text": "The first round must come to an end. Everybody make sure your discard pile is empty." },
-				{ "speaker": "dealer", "text": "Then we wait until every card has made it to the final pile: the left's discard." },
-				{ "speaker": "player", "text": "So I keep discarding until every pile runs dry." },
 				{ "event": "speed_up_npcs" },
 				{ "event": "wait_for_drain", "wait": true },
-				{ "speaker": "dealer", "text": "That's all of them. I'll collect the final pile, shuffle it, and deal everyone back up to five.", "event": "collect_and_deal" },
+				{ "speaker": "dealer", "text": "Everyone stop. Time to reshuffle.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/round_one_reshuffle_0.wav", "event": "collect_and_deal", "pause": 1.0 },
 				{ "wait": true },
 				{ "event": "slow_down_npcs" },
-				{ "speaker": "dealer", "text": "Round two. This deck is the last one, so make it count." },
-				{ "speaker": "player", "text": "Last chance. Whoever has the most sets walks out of here." }
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "You ever wonder why they set up all this? The candles, the goblet, this whole...place?", "audio": "res://Assets/audio/dialogue/melanieLines/round_one_reshuffle_1.wav" },
+				{ "speaker": "right_npc", "look_at": "left_npc", "text": "Don't know, don't care. I'm just here to win and get out of here.", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/round_one_reshuffle_2.wav" },
+				{ "speaker": "dealer", "look_at": "left_npc", "text": "An escape from this prison through competition. That's what it said on the paperwork.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/round_one_reshuffle_3.wav" },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "You read that? I just signed mine. Didn't think anyone actually took the time.", "audio": "res://Assets/audio/dialogue/melanieLines/round_one_reshuffle_4.wav" },
+				{ "speaker": "right_npc", "look_at": "player", "text": "That's enough chatting, eyes on your cards.", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/round_one_reshuffle_5.wav" }
 			]
 		},
 		{
-			"id": "final_round",
+			"id": "round_two_deck_exhausted",
 			"trigger": { "type": "cards_left", "value": 0, "round": 2 },
 			"interrupt": true,
 			"lines": [
-				{ "speaker": "dealer", "text": "That's the last card. Make your final sets, then discard whatever you have left.", "event": "start_final_phase" },
+				{ "speaker": "dealer", "text": "Deck's gone. Passing all my useless cards. Everyone else do the same once your discard pile is expired.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/round_two_deck_exhausted_0.wav", "event": "start_final_phase" },
 				{ "event": "speed_up_npcs" },
-				{ "speaker": "right_npc", "look_at": "dealer", "text": "And then what happens?" },
-				{ "speaker": "dealer", "look_at": "right_npc", "text": "Nobody told me that part." },
-				{ "speaker": "player", "text": "Nobody told any of us that part." },
 				{ "event": "wait_for_game_end", "wait": true },
 				{ "event": "begin_ending", "wait": true }
 			]
 		},
 		{
-			"id": "ending_win_dealer",
+			"id": "flynn_goes_out",
 			"trigger": { "type": "manual" },
-			"disable_play": true,
 			"lines": [
-				{ "speaker": "dealer", "text": "As expected, I won.", "pause": 1.5 }
+				{ "speaker": "right_npc", "text": "I'm out, take these suckers.", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/flynn_goes_out_0.wav" }
 			]
 		},
 		{
-			"id": "ending_win_left_npc",
+			"id": "melanie_goes_out",
 			"trigger": { "type": "manual" },
-			"disable_play": true,
 			"lines": [
-				{ "speaker": "player", "text": "To my dismay, Flynn won." },
-				{ "speaker": "left_npc", "look_at": "player", "text": "Ha ha, see ya losers!", "pause": 1.5 }
+				{ "speaker": "left_npc", "text": "Game's over. Now what?", "audio": "res://Assets/audio/dialogue/melanieLines/melanie_goes_out_0.wav" }
 			]
 		},
 		{
-			"id": "ending_win_right_npc",
+			"id": "unmatched_game_over_flynn_wins",
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "player", "text": "Congrats, Melanie." },
-				{ "speaker": "right_npc", "text": "I'm free!", "pause": 1.5 }
+				{ "speaker": "dealer", "text": "To my dismay, Flynn won.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/unmatched_game_over_flynn_wins.wav", "pause": 1.5 },
+				{ "speaker": "right_npc", "text": "Ha ha, see ya losers!", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/unmatched_game_over_flynn_wins_1.wav" },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "So what happens now?", "audio": "res://Assets/audio/dialogue/melanieLines/unmatched_game_over_flynn_wins_2.wav", "pause": 1.2 }
 			]
 		},
 		{
-			"id": "ending_win_player",
+			"id": "unmatched_game_over_melanie_wins",
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "dealer", "look_at": "player", "text": "Seems like you have the most sets.", "pause": 1.5 }
+				{ "speaker": "dealer", "text": "Congrats, Melanie.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/unmatched_game_over_melanie_wins.wav", "pause": 1.5 },
+				{ "speaker": "left_npc", "text": "I'm free!", "audio": "res://Assets/audio/dialogue/melanieLines/unmatched_game_over_melanie_wins_1.wav" },
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "So what happens now?", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/unmatched_game_over_melanie_wins_2.wav", "pause": 1.2 }
 			]
 		},
 		{
-			"id": "ending_question_left_npc",
+			"id": "unmatched_game_over_player_wins",
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "left_npc", "look_at": "dealer", "text": "So what happens now?", "pause": 1.2 }
+				{ "speaker": "dealer", "look_at": "player", "text": "Seems like you have the most sets.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/unmatched_game_over_player_wins.wav", "pause": 1.5 },
+				{ "speaker": "left_npc", "look_at": "dealer", "text": "So what happens now?", "audio": "res://Assets/audio/dialogue/melanieLines/unmatched_game_over_player_wins_1.wav", "pause": 1.2 }
 			]
 		},
 		{
-			"id": "ending_question_right_npc",
+			"id": "unmatched_game_over_dian_wins",
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "right_npc", "look_at": "dealer", "text": "So what happens now?", "pause": 1.2 }
+				{ "speaker": "dealer", "text": "As expected, I won.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/unmatched_game_over_dian_wins.wav", "pause": 1.5 },
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "So what happens now?", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/unmatched_game_over_dian_wins_2.wav", "pause": 1.2 }
 			]
 		},
 		{
-			"id": "ending_matched",
+			"id": "unmatched_game_over_tie",
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "dealer", "look_at": "left_npc", "text": "Are all cards matched?", "pause": 1.5 },
-				{ "speaker": "left_npc", "look_at": "dealer", "text": "Yeah, what's the big deal?", "pause": 1.5 },
-				{ "event": "ending_open_door" },
-				{ "speaker": "knight", "text": "You are all free to go...", "delay": 8.0, "pause": 1.5 },
-				{ "speaker": "knight", "text": "...except you. I saw what you did, and I'll admit, I'm impressed...", "pause": 1.5 },
-				{ "speaker": "knight", "text": "...but it's not supposed to work that way either.", "pause": 2.0 },
-				{ "event": "ending_fade_out", "wait": true }
+				{ "speaker": "dealer", "text": "It is a tie.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/unmatched_game_over_tie_0.wav", "pause": 1.5 },
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "So what happens now?", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/unmatched_game_over_dian_wins_2.wav", "pause": 1.2 }
 			]
 		},
 		{
-			"id": "ending_burn",
+			"id": "unmatched_game_over",
 			"trigger": { "type": "manual" },
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "dealer", "text": "We will get rid of the stragglers efficiently.", "pause": 1.2 },
+				{ "speaker": "dealer", "text": "We will get rid of the stragglers efficiently.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/unmatched_game_over.wav", "pause": 1.2 },
 				{ "event": "ending_cards_to_candle", "wait": true },
-				{ "speaker": "left_npc", "look_at": "dealer", "text": "Wait, it's not supposed to work this way!", "event": "ending_burn" },
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "Wait, it's not supposed to work this way!", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/unmatched_game_over_1.wav", "event": "ending_burn" },
 				{ "wait": true }
 			]
 		},
 		{
-			"id": "cheat_first_peek",
+			"id": "all_cards_matched_ending",
 			"trigger": { "type": "manual" },
+			"disable_play": true,
 			"lines": [
-				{ "speaker": "player", "text": "I shouldn't, but..." },
-				{ "speaker": "player", "text": "Just one quick look at their cards." }
+				{ "speaker": "dealer", "look_at": "right_npc", "text": "Are all cards matched?", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/all_cards_matched_ending.wav", "pause": 1.5 },
+				{ "speaker": "right_npc", "look_at": "dealer", "text": "Yeah, what's the big deal?", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/all_cards_matched_ending_1.wav", "pause": 1.5 },
+				{ "event": "ending_open_door" }
 			]
 		},
 		{
-			"id": "cheat_first_swap",
+			"id": "stealing_ending",
 			"trigger": { "type": "manual" },
+			"disable_play": true,
 			"lines": [
-				{ "speaker": "player", "text": "I shouldn't, but... I need this card more than they do." }
+				{ "speaker": "knight", "text": "You are all free to go...except you. I saw what you did, and I'll admit, I'm impressed...but it's not supposed to work that way either.", "audio": "res://Assets/audio/dialogue/knightLines/stealing_ending_0.wav", "delay": 8.0, "pause": 2.0 },
+				{ "event": "ending_fade_out", "wait": true }
 			]
 		},
 		{
-			"id": "got_away_1",
-			"trigger": { "type": "manual" },
-			"lines": [
-				{ "speaker": "player", "text": "Nobody noticed." },
-				{ "speaker": "player", "text": "That was easier than it should have been." }
-			]
-		},
-		{
-			"id": "got_away_2",
-			"trigger": { "type": "manual" },
-			"lines": [
-				{ "speaker": "player", "text": "Again. And nobody saw." },
-				{ "speaker": "player", "text": "Better not push my luck." }
-			]
-		},
-		{
-			"id": "got_away_3",
-			"trigger": { "type": "manual" },
-			"lines": [
-				{ "speaker": "player", "text": "Three for three. I'm getting good at this." },
-				{ "speaker": "player", "text": "Sooner or later someone is going to catch me." }
-			]
-		},
-		{
-			"id": "caught_1",
+			"id": "caught_1_flynn",
 			"trigger": { "type": "manual" },
 			"interrupt": true,
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "$complainer", "look_at": "player", "text": "Hey, stop looking at my cards!" },
-				{ "speaker": "dealer", "look_at": "$complainer", "text": "No arguing." },
+				{ "speaker": "right_npc", "look_at": "player", "text": "Hey, stop looking at my cards!", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/caught_stealing_strike_one_flynn_0.wav" },
+				{ "speaker": "dealer", "look_at": "right_npc", "text": "No arguing.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/caught_stealing_strike_one_flynn_1.wav" },
+				{ "speaker": "player", "text": "I must steal when their *eyes* are not on their own cards." }
+			]
+		},
+		{
+			"id": "caught_1_melanie",
+			"trigger": { "type": "manual" },
+			"interrupt": true,
+			"disable_play": true,
+			"lines": [
+				{ "speaker": "left_npc", "look_at": "player", "text": "Hey, stop looking at my cards!", "audio": "res://Assets/audio/dialogue/melanieLines/caught_stealing_strike_one_melanie_0.wav" },
+				{ "speaker": "dealer", "look_at": "left_npc", "text": "No arguing.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/caught_stealing_strike_one_melanie_1.wav" },
 				{ "speaker": "player", "text": "I must steal when their *eyes* are not on their own cards." }
 			]
 		},
@@ -204,33 +215,34 @@
 			"interrupt": true,
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "left_npc", "look_at": "player", "text": "Come on. This is the second time you've looked at our cards!" },
-				{ "speaker": "dealer", "look_at": "player", "text": "Pull that trick again, and you'll wish you hadn't." }
+				{ "speaker": "right_npc", "look_at": "player", "text": "Come on. This is the second time you've looked at our cards!", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/caught_stealing_strike_two_0.wav" },
+				{ "speaker": "dealer", "look_at": "player", "text": "Pull that trick again, and you'll wish you hadn't.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/caught_stealing_strike_two_1.wav" }
 			]
 		},
 		{
-			"id": "caught_3",
+			"id": "caught_3_flynn",
 			"trigger": { "type": "manual" },
 			"interrupt": true,
 			"disable_play": true,
 			"lines": [
-				{ "speaker": "$complainer", "look_at": "player", "text": "Alright, you're done.", "event": "put_cards_down" },
-				{ "speaker": "dealer", "look_at": "player", "text": "Guard!", "pause": 1.5 },
+				{ "speaker": "right_npc", "look_at": "player", "text": "Alright, you're done.", "audio": "res://Assets/audio/dialogue/flynnLines/flynn_lines/interrupted_ending_flynn_0.wav", "event": "put_cards_down" },
+				{ "speaker": "dealer", "look_at": "player", "text": "Guard!", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/interrupted_ending_0.wav", "pause": 1.5 },
 				{ "event": "ending_open_door" },
-				{ "speaker": "dealer", "look_at": "knight", "delay": 9.0, "text": "Someone's trying to be clever. Let them know it's not supposed to work that way.", "pause": 2.0 },
+				{ "speaker": "dealer", "look_at": "knight", "delay": 9.0, "text": "Someone's trying to be clever. Let them know it's not supposed to work that way.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/interrupted_ending_1.wav", "pause": 2.0 },
 				{ "event": "ending_fade_white", "wait": true }
 			]
 		},
 		{
-			"id": "five_drawn",
-			"trigger": { "type": "cards_drawn", "value": 5 },
+			"id": "caught_3_melanie",
+			"trigger": { "type": "manual" },
+			"interrupt": true,
+			"disable_play": true,
 			"lines": [
-				{ "speaker": "left_npc", "look_at": "right_npc", "text": "You ever wonder who's paying for all this? The candles, the wine, a whole room just for us." },
-				{ "speaker": "right_npc", "look_at": "left_npc", "text": "The state. The same people who put us here." },
-				{ "speaker": "dealer", "look_at": "left_npc", "text": "Rehabilitation through competition. That's what the paperwork called it." },
-				{ "speaker": "left_npc", "look_at": "dealer", "text": "I signed mine without reading it. Didn't think anyone read those." },
-				{ "speaker": "right_npc", "look_at": "player", "text": "Eyes on your own cards, all of you." },
-				{ "speaker": "player", "text": "Nobody here is going to play fair. I shouldn't either." }
+				{ "speaker": "left_npc", "look_at": "player", "text": "Alright, you're done.", "audio": "res://Assets/audio/dialogue/melanieLines/interrupted_ending_melanie_0.wav", "event": "put_cards_down" },
+				{ "speaker": "dealer", "look_at": "player", "text": "Guard!", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/interrupted_ending_0.wav", "pause": 1.5 },
+				{ "event": "ending_open_door" },
+				{ "speaker": "dealer", "look_at": "knight", "delay": 9.0, "text": "Someone's trying to be clever. Let them know it's not supposed to work that way.", "audio": "res://Assets/audio/dialogue/dianLines/DianLines/interrupted_ending_1.wav", "pause": 2.0 },
+				{ "event": "ending_fade_white", "wait": true }
 			]
 		}
 	]

@@ -17,13 +17,20 @@ extends Node
 ## opening, lays out a finished table and goes straight to the ending dialogue. Ignored in
 ## exported (non-debug) builds.
 
-enum TestWinner { RANDOM, DEALER, LEFT_NPC, RIGHT_NPC, PLAYER }
+enum TestWinner { RANDOM, DEALER, LEFT_NPC, RIGHT_NPC, PLAYER, TIE }
 enum TestEnding { UNMATCHED_CARDS, ALL_MATCHED }
 
 const DEALER := &"dealer"
 const LEFT_NPC := &"left_npc"
 const RIGHT_NPC := &"right_npc"
 const PLAYER := &"player"
+# Used in the names of the unmatched_game_over_<name>_wins sequences.
+const WINNER_NAMES := {
+	&"dealer": "dian",
+	&"left_npc": "melanie",
+	&"right_npc": "flynn",
+	&"player": "player",
+}
 const FLAME_SCENE := preload("res://Assets/flame/flame.tscn")
 
 @export var dialogue_manager: DialogueManager
@@ -138,7 +145,7 @@ func _areas() -> Dictionary:
 	}
 
 ## The speaker id of whoever laid down the most sets. A tie goes to the dealer, then the left
-## player, the right player and last the player (the order of the areas above).
+## player, the right player and last the player (the order of the areas above); see is_tie().
 func determine_winner() -> StringName:
 	var areas := _areas()
 	var winner := DEALER
@@ -150,16 +157,30 @@ func determine_winner() -> StringName:
 			winner = key
 	return winner
 
+## True when two or more players share the most sets.
+func is_tie() -> bool:
+	var areas := _areas()
+	var best := -1
+	var holders := 0
+	for key in areas:
+		var area := areas[key] as TableSetArea
+		if area == null:
+			continue
+		if area.get_set_count() > best:
+			best = area.get_set_count()
+			holders = 1
+		elif area.get_set_count() == best:
+			holders += 1
+	return holders > 1
+
 func _begin_ending() -> void:
 	if final_pile == null or not final_pile.has_cards():
-		dialogue_manager.play_sequence("ending_matched")
+		dialogue_manager.play_sequence("all_cards_matched_ending")
+		dialogue_manager.play_sequence("stealing_ending")
 		return
-	var winner := determine_winner()
-	dialogue_manager.play_sequence("ending_win_%s" % winner)
-	var questioners: Array[StringName] = [LEFT_NPC, RIGHT_NPC]
-	questioners.erase(winner)
-	dialogue_manager.play_sequence("ending_question_%s" % questioners.pick_random())
-	dialogue_manager.play_sequence("ending_burn")
+	var result := "tie" if is_tie() else "%s_wins" % WINNER_NAMES.get(determine_winner(), "dian")
+	dialogue_manager.play_sequence("unmatched_game_over_%s" % result)
+	dialogue_manager.play_sequence("unmatched_game_over")
 
 # ---------------------------------------------------------------------------------------------
 # All cards matched: the door opens
@@ -474,11 +495,17 @@ func _stage_final_table() -> void:
 			(_areas()[keys[index % keys.size()]] as TableSetArea).receive_set(set_cards)
 		print("Ending test: every card is matched (%d sets)." % complete.size())
 		return
-	var winner: StringName = keys.pick_random() if test_winner == TestWinner.RANDOM else keys[test_winner - 1]
+	var tie := test_winner == TestWinner.TIE
+	var winner: StringName = keys.pick_random() if test_winner == TestWinner.RANDOM or tie else keys[test_winner - 1]
 	var winner_sets := randi_range(3, 4)
+	var co_winner: StringName = &""
+	if tie:
+		var others := keys.duplicate()
+		others.erase(winner)
+		co_winner = others.pick_random()
 	for key in keys:
 		var area := _areas()[key] as TableSetArea
-		var wanted := winner_sets if key == winner else randi_range(0, winner_sets - 1)
+		var wanted := winner_sets if key == winner or key == co_winner else randi_range(0, winner_sets - 1)
 		for index in wanted:
 			if complete.is_empty():
 				break

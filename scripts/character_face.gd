@@ -28,11 +28,11 @@ const PLAYER := &"player"
 
 @export_group("Looking around")
 ## Time spent reading their cards between stares (never less than the minimum).
-@export_range(0.5, 120.0) var look_up_interval_min: float = 13.0
-@export_range(0.5, 120.0) var look_up_interval_max: float = 30.0
+@export_range(0.5, 120.0) var look_up_interval_min: float = 6.0
+@export_range(0.5, 120.0) var look_up_interval_max: float = 12.0
 ## How long a stare at someone lasts (never less than the minimum).
-@export_range(0.3, 60.0) var look_up_duration_min: float = 13.0
-@export_range(0.3, 60.0) var look_up_duration_max: float = 18.0
+@export_range(0.3, 60.0) var look_up_duration_min: float = 20.0
+@export_range(0.3, 60.0) var look_up_duration_max: float = 30.0
 ## How likely the player is picked compared with each other character (which count 1).
 @export_range(0.0, 3.0) var player_weight: float = 0.6
 
